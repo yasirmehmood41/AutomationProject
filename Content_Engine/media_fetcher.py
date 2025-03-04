@@ -5,13 +5,20 @@ import random
 from PIL import Image
 from io import BytesIO
 import logging
-from config_loader import load_config
+from utils.config_loader import load_config
 
-# Set up logging
+import os
+import logging
+logger = logging.getLogger('media_fetcher')
+# Create logs directory if it doesn't exist
+log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
+# Then set up logging
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    filename='./logs/media_fetcher.log')
-logger = logging.getLogger('media_fetcher')
+                    filename=os.path.join(log_dir, 'media_fetcher.log'),
+                    filemode='a')
 
 
 class MediaFetcher:

@@ -4,7 +4,7 @@ from Content_Engine.template_manager import get_default_template
 from Content_Engine.scene_generator import generate_scene_metadata
 from Content_Engine.text_analyzer import extract_keywords
 from Media_Handler.voice_system import generate_voice
-from Media_Handler.video_processor import process_video
+from Media_Handler.video_processor import VideoProcessor
 from Output_Manager.export_manager import export_video
 from Output_Manager.quality_checker import check_video_quality
 
@@ -36,7 +36,8 @@ def main():
     # Media Handler
     voice_file = generate_voice(sample_script)
     print("\nVoice file generated at:", voice_file)
-    processed_video = process_video(scenes, voice_file)
+    video_processor = VideoProcessor(config)  # Initialize the processor
+    processed_video = video_processor.process_video(scenes, voice_file)  # Call the method
     print("\nProcessed video created at:", processed_video)
 
     # Output Manager

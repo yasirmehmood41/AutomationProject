@@ -5,33 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29f02428-54c1-495e-a427-603dcd9f805c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Content_Engine/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content_Engine/scene_generator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content_Engine/script_processor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content_Engine/template_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content_Engine/text_analyzer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content_Engine/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Manual_Interface/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Manual_Interface/editor_integration.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Manual_Interface/override_controls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Manual_Interface/preview_engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Manual_Interface/quick_edit.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Manual_Interface/templates/preview.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Media_Handler/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Media_Handler/asset_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Media_Handler/format_optimizer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Media_Handler/video_processor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Media_Handler/voice_system.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Output_Manager/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Output_Manager/compression_tools.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Output_Manager/export_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Output_Manager/quality_checker.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_export_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_script_processor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_video_processor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/config_loader.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/logger.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old video processor py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content_Engine/media_fetcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/Content_Engine/media_fetcher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Media_Handler/video_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Media_Handler/video_processor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Output_Manager/outputs/final_video.mp4" beforeDir="false" afterPath="$PROJECT_DIR$/Output_Manager/outputs/final_video.mp4" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -42,8 +20,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="HTML File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -68,6 +46,7 @@
   "keyToString": {
     "DefaultHtmlFileTemplate": "HTML File",
     "Python.asset_manager.executor": "Run",
+    "Python.editor_integration.executor": "Run",
     "Python.main.executor": "Run",
     "Python.test.executor": "Run",
     "Python.video_processor.executor": "Run",

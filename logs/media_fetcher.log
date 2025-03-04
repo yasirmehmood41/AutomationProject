@@ -1,0 +1,59 @@
+2025-03-04 10:07:29,217 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 10:07:29,217 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 10:08:34,695 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 10:08:34,695 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 10:13:12,137 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 10:13:12,140 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 10:16:32,517 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 10:16:32,517 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 10:29:03,332 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 10:29:03,332 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 10:29:03,731 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 10:29:03,731 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 10:29:03,734 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 10:29:03,734 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 11:12:55,523 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 11:12:55,524 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 11:12:56,058 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 11:12:56,058 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 11:12:56,058 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 11:12:56,058 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 11:31:57,854 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 11:31:57,855 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 11:31:58,246 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 11:31:58,246 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 11:31:58,246 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 11:31:58,247 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 12:51:11,191 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 12:51:11,191 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 12:51:11,593 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 12:51:11,593 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 12:51:11,594 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 12:51:11,594 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 12:52:13,813 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 12:52:13,814 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 12:52:14,209 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 12:52:14,209 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 12:52:14,209 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 12:52:14,209 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 12:55:16,290 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 12:55:16,291 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 12:55:16,668 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 12:55:16,669 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 12:55:16,669 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 12:55:16,669 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 13:42:30,643 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-04 13:42:30,643 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-04 13:42:31,032 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 13:42:31,032 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduce', 'product.']. Using local media.
+2025-03-04 13:42:31,033 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 13:42:31,033 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 13:42:32,985 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 13:42:32,985 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'explain', 'its', 'benefits.']. Using local media.
+2025-03-04 13:42:32,985 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 13:42:32,985 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 13:42:35,447 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-04 13:42:35,447 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'conclude', 'call-to-action.']. Using local media.
+2025-03-04 13:42:35,448 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-04 13:42:35,448 - video_processor - WARNING - No background media found for scene. Using solid background.
+2025-03-04 13:42:37,864 - video_processor - INFO - Extending video duration to match audio: 9.9 seconds
