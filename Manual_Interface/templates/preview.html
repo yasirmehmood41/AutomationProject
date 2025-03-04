@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scene Preview Dashboard</title>
+</head>
+<body>
+    <h1>Scene Preview Dashboard</h1>
+    {% for scene in scenes %}
+    <div>
+        <h3>Scene {{ scene.scene_number }}</h3>
+        <p>{{ scene.text }} (Duration: {{ scene.duration }} sec)</p>
+        <form action="/update" method="POST">
+            <input type="hidden" name="scene_number" value="{{ scene.scene_number }}">
+            <input type="text" name="new_text" placeholder="Update scene text">
+            <button type="submit">Update</button>
+        </form>
+    </div>
+    <hr>
+    {% endfor %}
+</body>
+</html>

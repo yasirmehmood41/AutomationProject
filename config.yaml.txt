@@ -1,0 +1,38 @@
+# Global configuration for AutomationProject
+
+general:
+  project_name: "AutomationProject"
+  environment: "development"   # Options: development, staging, production
+
+api_keys:
+  tts: "YOUR_TTS_API_KEY"        # Replace with your TTS provider API key
+  chatgpt: "YOUR_CHATGPT_API_KEY"  # Replace with your ChatGPT (or other AI) API key
+
+paths:
+  assets: "./Content_Engine/assets/"        # Folder for media assets and templates
+  output: "./Output_Manager/outputs/"         # Folder to store final videos
+  logs: "./logs/"                             # Folder for log files
+  temp: "./temp/"                             # Folder for temporary files (if needed)
+
+video:
+  resolution: "1920x1080"     # Video resolution
+  bitrate: "5M"              # Bitrate for encoding
+  codec: "h264"              # Video codec
+  fps: 30                    # Frames per second
+  format: "mp4"              # Output file format
+
+audio:
+  sample_rate: 44100         # Audio sample rate
+  channels: 2                # Number of audio channels
+  codec: "aac"               # Audio codec
+
+logging:
+  level: "DEBUG"             # Logging level: DEBUG, INFO, WARNING, ERROR
+  log_to_file: true          # Whether to log output to a file
+  log_file: "./logs/project.log"  # Log file path
+
+# Optional: Quality benchmarks for automated quality checks
+quality:
+  max_render_time: 120       # Maximum acceptable render time (in seconds)
+  min_audio_volume: -20      # Minimum audio volume in dB
+  max_video_noise: 5         # Maximum noise level in the video (arbitrary scale)

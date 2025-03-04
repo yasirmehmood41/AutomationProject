@@ -1,28 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="29f02428-54c1-495e-a427-603dcd9f805c" name="Changes" comment="" />
+    <list default="true" id="29f02428-54c1-495e-a427-603dcd9f805c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Content_Engine/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content_Engine/scene_generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content_Engine/script_processor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content_Engine/template_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content_Engine/text_analyzer.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content_Engine/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Manual_Interface/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Manual_Interface/editor_integration.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Manual_Interface/override_controls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Manual_Interface/preview_engine.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Manual_Interface/quick_edit.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Manual_Interface/templates/preview.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Media_Handler/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Media_Handler/asset_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Media_Handler/format_optimizer.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Media_Handler/video_processor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Media_Handler/voice_system.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Output_Manager/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Output_Manager/compression_tools.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Output_Manager/export_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Output_Manager/quality_checker.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_export_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_script_processor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_video_processor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/config_loader.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/logger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 0
-}]]></component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Media_Handler/video_processor.py" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
   <component name="ProjectId" id="2tZF5FkwwId2Qzy8mvqo01JM54H" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "Python.asset_manager.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.test.executor": "Run",
+    "Python.video_processor.executor": "Run",
+    "Python.voice_system.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master"
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
   <component name="SharedIndexes">
