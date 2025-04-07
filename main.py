@@ -16,9 +16,25 @@ def main():
 
     # Sample script
     sample_script = (
-        "Scene 1: Introduce the product.\n\n"
-        "Scene 2: Explain its benefits.\n\n"
-        "Scene 3: Conclude with a call-to-action."
+        "Scene 1: Introduction to Smart Investing\n\n"
+        "Start by explaining the importance of financial literacy. "
+        "Introduce the idea of smart investing and how it helps in wealth growth.\n\n"
+
+        "Scene 2: Understanding Risk and Reward\n\n"
+        "Discuss different investment options like stocks, bonds, and real estate. "
+        "Explain the concept of risk vs. reward and how diversification can help.\n\n"
+
+        "Scene 3: The Power of Compound Interest\n\n"
+        "Illustrate how compound interest works using simple examples. "
+        "Show how early investments grow significantly over time.\n\n"
+
+        "Scene 4: Avoiding Common Financial Mistakes\n\n"
+        "Talk about emotional investing, lack of planning, and ignoring inflation. "
+        "Give practical tips to avoid these financial pitfalls.\n\n"
+
+        "Scene 5: Call to Action - Start Today!\n\n"
+        "Encourage viewers to start investing today, even with small amounts. "
+        "Provide resources or platforms to help them begin their financial journey."
     )
 
     # Content Engine

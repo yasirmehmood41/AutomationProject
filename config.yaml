@@ -1,11 +1,11 @@
 # Video Generation System Configuration
-
 # Project Settings
 project:
-  name: "Auto Video Generator"
+  name: "AutomationProject"
   output_dir: "./Output_Manager/outputs/"
   temp_dir: "./temp/"
   log_dir: "./logs/"
+  cache_dir: "./cache/"  # For storing processed media
 
 # Media Settings
 media:
@@ -14,6 +14,8 @@ media:
     width: 1920
     height: 1080
   fps: 30
+  quality: "high"  # Options: "low", "medium", "high"
+  bitrate: "5000k"  # Higher for better quality
 
 # Media Sources Configuration
 sources:
@@ -26,6 +28,7 @@ sources:
     category: ""  # Leave empty for all categories
     min_width: 1920
     min_height: 1080
+    safesearch: true
 
   # Pexels API Configuration
   pexels:
@@ -49,40 +52,121 @@ sources:
       fonts: "./Content_Engine/assets/fonts/"
       audio: "./Content_Engine/assets/audio/"
 
+  # Cache settings
+  cache:
+    enabled: true
+    max_size_mb: 1000  # 1GB cache limit
+    expiry_days: 7     # Cache items expire after 7 days
+
 # Text-to-Speech Configuration
 tts:
-  provider: "google"  # Options: "google", "amazon", "local"
+  provider: "google"  # Options: "google", "amazon", "azure", "local"
   language: "en-US"
   voice: "en-US-Standard-D"
   speed: 1.0
+  pitch: 0.0  # -10.0 to 10.0
+  volume_gain_db: 0.0  # -6.0 to 6.0
+
   # Google TTS specific settings
   google:
     api_key: "YOUR_GOOGLE_TTS_API_KEY"
+    use_neural_voice: true
+
   # Amazon Polly specific settings
   amazon:
     region: "us-east-1"
     access_key: "YOUR_AWS_ACCESS_KEY"
     secret_key: "YOUR_AWS_SECRET_KEY"
+    voice_engine: "neural"  # Options: "standard", "neural"
+
+  # Azure TTS specific settings
+  azure:
+    api_key: "YOUR_AZURE_TTS_API_KEY"
+    region: "eastus"
+    neural_voice: true
 
 # Text Processing Settings
 text_processing:
   keyword_extraction: true
   keyword_limit: 5
   sentiment_analysis: true
+  content_filtering: true  # Filter inappropriate content
+  language_detection: true  # Detect language and use appropriate TTS
+
+# Audio Processing
+audio:
+  background_music: true
+  music_volume: 0.2  # Background music volume (0.0 to 1.0)
+  normalize_audio: true
+  add_noise_reduction: true
 
 # Video Style Settings
 video_style:
+  # Basic styling
   font: "Arial"
-  font_size: 70
+  font_size: 100
   font_color: "white"
   text_position: "center"  # Options: "center", "bottom", "top"
-  background_color: "#000000"  # Used if no background image
-  transition: "fade"  # Options: "fade", "slide", "none"
+  background_color: "#ADD8E6"  # Used if no background image
+  transition: "slide"  # Options: "fade", "slide", "none"
   transition_duration: 1.0  # In seconds
+
+  # Advanced styling
+  text_opacity: 0.9  # Text opacity (0.0 to 1.0)
+  stroke_width: 2     # Text outline width
+  stroke_color: "black"  # Text outline color
+  text_effect: "typewriter"  # Options: "none", "typewriter", "bounce"
+  background_blur: 5   # Background blur strength (0 to 10)
+  zoom_effect: false   # Enable subtle zoom on images
+  zoom_ratio: 0.05     # How much to zoom (0.01 to 0.2)
+
+  # Animation settings
+  enable_animations: false
+  animation_style: "subtle"  # Options: "subtle", "medium", "dynamic"
+
+  # Branding
+  watermark:
+    enabled: false
+    image_path: "./Content_Engine/assets/branding/logo.png"
+    position: "bottom-right"  # Options: "top-left", "top-right", "bottom-left", "bottom-right"
+    opacity: 0.7
+
+  # Advanced filters
+  color_correction:
+    enabled: false
+    brightness: 0  # -50 to 50
+    contrast: 0    # -50 to 50
+    saturation: 0  # -50 to 50
 
 # Scene Settings
 scene:
   default_duration: 5  # In seconds
   min_duration: 3  # In seconds
-  max_duration: 10  # In seconds
+  max_duration: 15  # In seconds
   auto_timing: true  # Automatically adjust scene duration based on text length
+
+  # Scene transitions
+  transition_types:
+    - "fade"
+    - "slide"
+    - "none"
+  random_transitions: false  # Use random transitions from the list
+
+  # Advanced scene settings
+  intro:
+    enabled: false
+    duration: 3.0
+    text: "Presents"
+
+  outro:
+    enabled: false
+    duration: 5.0
+    text: "Thanks for watching"
+    include_credits: true
+
+# Performance settings
+performance:
+  parallel_processing: true
+  threads: 4  # Number of parallel threads (0 = auto)
+  preview_quality: "medium"  # Quality for previews: "low", "medium", "high"
+  use_gpu: false  # Use GPU acceleration if available

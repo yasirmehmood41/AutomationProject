@@ -57,3 +57,347 @@
 2025-03-04 13:42:35,448 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
 2025-03-04 13:42:35,448 - video_processor - WARNING - No background media found for scene. Using solid background.
 2025-03-04 13:42:37,864 - video_processor - INFO - Extending video duration to match audio: 9.9 seconds
+2025-03-05 14:47:07,862 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-05 14:47:07,863 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-05 14:47:09,112 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:09,112 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-05 14:47:09,112 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:09,112 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:10,875 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:10,875 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-03-05 14:47:10,875 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:10,875 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:13,583 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:13,584 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-03-05 14:47:13,584 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:13,584 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:14,616 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:14,616 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-03-05 14:47:14,616 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:14,616 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:17,510 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:17,510 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-03-05 14:47:17,510 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:17,511 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:18,541 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:18,541 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-03-05 14:47:18,541 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:18,541 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:21,153 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:21,153 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-03-05 14:47:21,153 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:21,153 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:22,541 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:22,541 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-03-05 14:47:22,542 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:22,542 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:26,043 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:26,043 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-03-05 14:47:26,043 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:26,043 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-05 14:47:27,095 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-05 14:47:27,095 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-03-05 14:47:27,095 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-05 14:47:27,095 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:16,862 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-06 09:43:16,863 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-06 09:43:18,290 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,290 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-06 09:43:18,291 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,291 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,308 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,309 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-03-06 09:43:18,310 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,310 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,369 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,372 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-03-06 09:43:18,372 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,373 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,430 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,449 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,450 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,451 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-03-06 09:43:18,451 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-03-06 09:43:18,451 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,451 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,451 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,451 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,450 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-03-06 09:43:18,519 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,488 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,519 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,520 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-03-06 09:43:18,553 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,553 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,584 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,584 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-03-06 09:43:18,587 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,587 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,588 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,588 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-03-06 09:43:18,620 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,620 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:43:18,652 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:43:18,656 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-03-06 09:43:18,656 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:43:18,656 - video_processor - WARNING - No background found. Using a dynamic gradient background.
+2025-03-06 09:48:24,434 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-06 09:48:24,434 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-06 09:48:25,320 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,321 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-06 09:48:25,321 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,323 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,323 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-03-06 09:48:25,323 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,324 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,324 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,347 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-03-06 09:48:25,325 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,325 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-03-06 09:48:25,347 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,348 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,386 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,348 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,413 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,442 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,467 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,468 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,472 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,558 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,559 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-03-06 09:48:25,559 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,559 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,559 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,560 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-03-06 09:48:25,574 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,574 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,574 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,574 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-03-06 09:48:25,574 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,597 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,598 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-03-06 09:48:25,599 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,599 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,614 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,635 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,656 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,685 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,710 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,742 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,742 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-03-06 09:48:25,742 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,742 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,743 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,760 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-03-06 09:48:25,761 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,761 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,786 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,812 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,843 - video_processor - ERROR - Error in parallel processing: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,843 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:48:25,843 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-06 09:48:25,843 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:48:25,844 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:48:25,863 - video_processor - ERROR - Error creating scene clip: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:48:25,899 - video_processor - ERROR - Error processing scene 0: MoviePy Error: creation of None failed because of the following error:
+
+[WinError 2] The system cannot find the file specified.
+
+.This error can be due to the fact that ImageMagick is not installed on your computer, or (for Windows users) that you didn't specify the path to the ImageMagick binary in file conf.py, or that the path you specified is incorrect
+2025-03-06 09:49:39,061 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-06 09:49:39,061 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-06 09:49:40,024 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:40,025 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-06 09:49:40,025 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:40,025 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:40,026 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-03-06 09:49:40,026 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:40,026 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:40,026 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:40,027 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-03-06 09:49:40,027 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:40,047 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-03-06 09:49:40,047 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:40,047 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:40,047 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:40,047 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:40,070 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:42,451 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:42,470 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:42,470 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-03-06 09:49:42,470 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-03-06 09:49:42,471 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:42,471 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:42,471 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:42,471 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:44,203 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:44,203 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-03-06 09:49:44,203 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:44,203 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:45,594 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:45,594 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-03-06 09:49:45,595 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:45,595 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:46,538 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:46,539 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-03-06 09:49:46,542 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:46,543 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:47,001 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-06 09:49:47,009 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-03-06 09:49:47,009 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-06 09:49:47,010 - video_processor - WARNING - No background found. Using a solid background.
+2025-03-06 09:49:51,361 - video_processor - INFO - Trimming video to match audio (66.73s).
+2025-03-11 11:17:41,615 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-11 11:17:41,616 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-11 11:17:43,376 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:43,376 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-11 11:17:43,377 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:43,377 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:43,411 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:43,411 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-03-11 11:17:43,412 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:43,412 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:43,456 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:43,456 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-03-11 11:17:43,457 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:43,458 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:43,495 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:43,496 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-03-11 11:17:43,497 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:43,497 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:46,169 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:46,214 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:47,245 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:47,245 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-03-11 11:17:47,246 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:47,246 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:47,433 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:47,445 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-03-11 11:17:47,445 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:47,446 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:49,598 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:49,668 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:50,264 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:50,921 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:50,922 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-03-11 11:17:50,922 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:50,922 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:52,522 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:53,257 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:53,258 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-03-11 11:17:53,259 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:53,259 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:53,310 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:54,259 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:54,260 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-03-11 11:17:54,260 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:54,260 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:54,850 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 11:17:54,850 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-03-11 11:17:54,850 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 11:17:54,850 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 11:17:56,278 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:58,466 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:17:59,674 - video_processor - ERROR - Error creating scene clip: a bytes-like object is required, not 'function'
+2025-03-11 11:18:02,304 - video_processor - INFO - Trimming video to match audio (66.73s).
+2025-03-11 13:11:42,986 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-03-11 13:11:42,986 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-03-11 13:11:43,838 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:43,838 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-03-11 13:11:43,839 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:43,839 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:43,839 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:43,840 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-03-11 13:11:43,840 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:43,862 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:43,862 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:43,895 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-03-11 13:11:43,862 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:43,862 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-03-11 13:11:43,896 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:43,896 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:43,895 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:43,896 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:43,919 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:43,919 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:43,933 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:43,946 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:45,005 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:45,005 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-03-11 13:11:45,006 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:45,006 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:45,037 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:45,149 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:45,150 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-03-11 13:11:45,150 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:45,150 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:45,175 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:46,052 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:46,052 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-03-11 13:11:46,053 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:46,053 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:46,090 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:46,858 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:46,859 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-03-11 13:11:46,859 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:46,859 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:46,887 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:47,075 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:47,079 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-03-11 13:11:47,079 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:47,080 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:47,114 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:47,242 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-03-11 13:11:47,242 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-03-11 13:11:47,243 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-03-11 13:11:47,243 - video_processor - WARNING - No background media found. Using solid background.
+2025-03-11 13:11:47,281 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-03-11 13:11:49,875 - video_processor - INFO - Trimming video to match audio (66.73s).
