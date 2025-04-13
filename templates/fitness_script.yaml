@@ -1,0 +1,7 @@
+# Example: templates/fitness_script.yaml
+intro: "Get ready to transform your fitness journey with {topic}!"
+body_template: |
+  Here's how {topic} can help you:
+  - Benefit 1: {point1}
+  - Benefit 2: {point2}
+outro: "Keep pushing your limits. See you next time!"

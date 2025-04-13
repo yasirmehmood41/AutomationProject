@@ -6,6 +6,9 @@ project:
   temp_dir: "./temp/"
   log_dir: "./logs/"
   cache_dir: "./cache/"  # For storing processed media
+  default_niche: "tech"
+  output_directory: "output"
+  default_tone: "serious"
 
 # Media Settings
 media:
@@ -86,6 +89,49 @@ tts:
     api_key: "YOUR_AZURE_TTS_API_KEY"
     region: "eastus"
     neural_voice: true
+
+# Voice Settings
+voice:
+  provider: "elevenlabs"  # Options: elevenlabs, local, placeholder
+  local_engine: "pyttsx3"  # or "gtts"
+  elevenlabs:
+    voice_id: "YOUR_VOICE_ID"
+    api_key: "YOUR_API_KEY"  # store this securely or inject via env var
+  voice_backend: local
+  tone_preferences: 
+    - serious
+    - funny
+    - educational
+
+# Template Settings
+template:
+  niche_templates: 
+    - product_demo
+    - explainer
+
+# Niche-specific templates
+niches:
+  tech:
+    script_template: "templates/tech_script.yaml"
+    style: "neutral"
+  politics:
+    script_template: "templates/politics_script.yaml"
+    style: "assertive"
+  fitness:
+    script_template: "templates/fitness_script.yaml"
+    style: "motivational"
+
+# Video Export Settings
+video:
+  resolution: "1920x1080"
+  format: "mp4"
+  fps: 30
+
+# Export Settings
+export:
+  export_settings:
+    resolution: 1080p
+    format: mp4
 
 # Text Processing Settings
 text_processing:
