@@ -16,6 +16,8 @@ media:
   fps: 30
   quality: "high"  # Options: "low", "medium", "high"
   bitrate: "5000k"  # Higher for better quality
+  imagemagick:
+    path: "magick"  # Using system PATH since ImageMagick is now properly installed
 
 # Media Sources Configuration
 sources:

@@ -401,3 +401,230 @@
 2025-03-11 13:11:47,243 - video_processor - WARNING - No background media found. Using solid background.
 2025-03-11 13:11:47,281 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
 2025-03-11 13:11:49,875 - video_processor - INFO - Trimming video to match audio (66.73s).
+2025-04-09 16:47:10,714 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 16:47:10,715 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-09 16:47:11,087 - comtypes.client._generate - INFO - Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: Typelib different than module
+2025-04-09 16:47:11,093 - comtypes.client._generate - INFO - # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-04-09 16:47:11,249 - comtypes.client._generate - INFO - # Generating comtypes.gen.SpeechLib
+2025-04-09 16:47:12,945 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:12,946 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '1:', 'introduction', 'smart', 'investing']. Using local media.
+2025-04-09 16:47:12,947 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:12,947 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:12,947 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:12,947 - media_fetcher - WARNING - All API fetches failed for keywords: ['start', 'explaining', 'importance', 'financial', 'literacy.']. Using local media.
+2025-04-09 16:47:12,963 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:12,963 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:12,963 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:12,963 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '2:', 'understanding', 'risk', 'reward']. Using local media.
+2025-04-09 16:47:12,964 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:12,996 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:12,997 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:12,997 - media_fetcher - WARNING - All API fetches failed for keywords: ['discuss', 'different', 'investment', 'options', 'like']. Using local media.
+2025-04-09 16:47:13,018 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:13,018 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:13,019 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:13,047 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:13,076 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:13,138 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:14,762 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:14,762 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '3:', 'power', 'compound', 'interest']. Using local media.
+2025-04-09 16:47:14,763 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:14,763 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:14,830 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:14,912 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:14,912 - media_fetcher - WARNING - All API fetches failed for keywords: ['how', 'illustrate', 'compound', 'interest', 'works']. Using local media.
+2025-04-09 16:47:14,913 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:14,914 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:14,944 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:15,892 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:15,893 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '4:', 'avoiding', 'common', 'financial']. Using local media.
+2025-04-09 16:47:15,893 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:15,893 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:15,942 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:16,425 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:16,426 - media_fetcher - WARNING - All API fetches failed for keywords: ['talk', 'emotional', 'investing,', 'lack', 'planning,']. Using local media.
+2025-04-09 16:47:16,426 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:16,426 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:16,470 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:16,913 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:16,914 - media_fetcher - WARNING - All API fetches failed for keywords: ['scene', '5:', 'call', 'action', '-']. Using local media.
+2025-04-09 16:47:16,914 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:16,914 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:16,966 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:17,179 - media_fetcher - WARNING - Pixabay API key not set or invalid
+2025-04-09 16:47:17,180 - media_fetcher - WARNING - All API fetches failed for keywords: ['encourage', 'viewers', 'start', 'investing', 'today,']. Using local media.
+2025-04-09 16:47:17,180 - media_fetcher - ERROR - Error getting local image: [WinError 3] The system cannot find the path specified: './Content_Engine/assets/images/'
+2025-04-09 16:47:17,180 - video_processor - WARNING - No background media found. Using solid background.
+2025-04-09 16:47:17,286 - video_processor - ERROR - Error creating scene clip: 'VideoProcessor' object has no attribute '_create_text_clip'
+2025-04-09 16:47:19,951 - video_processor - INFO - Trimming video to match audio (66.73s).
+2025-04-09 17:14:35,715 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 17:14:35,715 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-09 17:19:07,956 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 17:19:07,957 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-09 17:21:42,815 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 17:21:42,815 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-09 17:23:47,484 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 17:23:47,484 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-09 17:24:16,187 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 17:24:16,187 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-09 17:26:25,194 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-09 17:26:25,194 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:35:41,190 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:35:41,191 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:38:51,800 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:38:51,801 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:41:35,463 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:41:35,463 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:46:28,610 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:46:28,610 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:49:33,185 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:49:33,185 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:52:45,437 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:52:45,437 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:52:52,199 - root - ERROR - Error creating scene clip: module 'moviepy.video.fx.all' has no attribute 'gaussian_blur'
+2025-04-10 09:59:06,095 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 09:59:06,096 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 09:59:12,880 - root - ERROR - Error creating scene clip: module 'moviepy.video.fx.all' has no attribute 'slide_in'
+2025-04-10 10:57:27,639 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 10:57:27,639 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 10:57:34,406 - root - ERROR - Error creating scene clip: 'CompositeVideoClip' object has no attribute 'transform'
+2025-04-10 10:59:05,412 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 10:59:05,412 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 11:05:16,668 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 11:05:16,668 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 11:14:14,774 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 11:14:14,774 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 11:14:29,298 - root - ERROR - Error processing video: name 'split_on_silence' is not defined
+2025-04-10 11:16:33,835 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 11:16:33,836 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 11:23:29,602 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 11:23:29,603 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 11:30:09,865 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 11:30:09,865 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 11:43:29,879 - root - ERROR - Error exporting video: [Errno 13] Permission denied: 'Output_Manager\\outputs\\final_video.mp4'
+2025-04-10 11:48:19,473 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 11:48:19,473 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 14:15:18,229 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 14:15:18,229 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 14:15:18,859 - root - INFO - Total audio duration: 43.02 seconds
+2025-04-10 14:15:18,859 - root - INFO - Number of scenes: 1
+2025-04-10 14:15:18,859 - root - INFO - Base duration per scene: 43.02 seconds
+2025-04-10 14:15:18,859 - root - INFO - 
+Processing Scene 1:
+2025-04-10 14:15:18,859 - root - INFO - Content: Artificial Intelligence and machine learning are revolutionizing every industry.
+    From healthcare to entertainment, smart algorithms are changing how we live and work.
+    
+    Scene 2: AI Applications
+    
+    Let's explore some exciting applications of AI:
+    - Automated video production
+    - Natural language processing
+    - Computer vision
+    - Robotics and automation
+    
+    Scene 3: What's Next?
+    
+    The future holds endless possibilities. As technology evolves,
+    we'll see even more amazing applications that enhance our daily lives.
+2025-04-10 14:15:18,859 - root - INFO - Start Time: 0.0
+2025-04-10 14:15:18,860 - root - INFO - Duration: 43.02
+2025-04-10 14:15:18,861 - root - INFO - Generated background color: (6, 199, 110)
+2025-04-10 14:15:25,329 - root - INFO - Clip duration set to: 43.02 seconds
+2025-04-10 14:15:25,329 - root - INFO - Clip created successfully
+2025-04-10 14:15:25,329 - root - INFO - 
+Total clips created: 1
+2025-04-10 14:15:25,355 - root - INFO - 
+Exporting video to: D:AutomationProject\Output_Manager\outputs\final_video_entertainment.mp4
+2025-04-10 14:21:00,961 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 14:21:00,961 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 14:21:01,602 - root - INFO - Total audio duration: 43.02 seconds
+2025-04-10 14:21:01,602 - root - INFO - Number of scenes: 3
+2025-04-10 14:21:01,602 - root - INFO - Base duration per scene: 14.340000000000002 seconds
+2025-04-10 14:21:01,602 - root - INFO - 
+Processing Scene 1:
+2025-04-10 14:21:01,602 - root - INFO - Content: Artificial Intelligence and machine learning are revolutionizing every industry.
+From healthcare to entertainment, smart algorithms are changing how we live and work.
+2025-04-10 14:21:01,602 - root - INFO - Start Time: 0.0
+2025-04-10 14:21:01,602 - root - INFO - Duration: 14.340000000000002
+2025-04-10 14:21:01,603 - root - INFO - Generated background color: (57, 230, 158)
+2025-04-10 14:21:04,503 - root - INFO - Clip duration set to: 14.340000000000002 seconds
+2025-04-10 14:21:04,503 - root - INFO - Clip created successfully
+2025-04-10 14:21:04,503 - root - INFO - 
+Processing Scene 2:
+2025-04-10 14:21:04,503 - root - INFO - Content: Let's explore some exciting applications of AI:
+- Automated video production
+- Natural language processing
+- Computer vision
+- Robotics and automation
+2025-04-10 14:21:04,503 - root - INFO - Start Time: 14.340000000000002
+2025-04-10 14:21:04,503 - root - INFO - Duration: 14.340000000000002
+2025-04-10 14:21:04,503 - root - INFO - Generated background color: (12, 216, 252)
+2025-04-10 14:21:06,954 - root - INFO - Clip duration set to: 14.340000000000002 seconds
+2025-04-10 14:21:06,954 - root - INFO - Clip created successfully
+2025-04-10 14:21:06,954 - root - INFO - 
+Processing Scene 3:
+2025-04-10 14:21:06,954 - root - INFO - Content: The future holds endless possibilities. As technology evolves,
+we'll see even more amazing applications that enhance our daily lives.
+2025-04-10 14:21:06,954 - root - INFO - Start Time: 28.680000000000003
+2025-04-10 14:21:06,954 - root - INFO - Duration: 14.340000000000002
+2025-04-10 14:21:06,954 - root - INFO - Generated background color: (23, 191, 110)
+2025-04-10 14:21:09,376 - root - INFO - Clip duration set to: 14.340000000000002 seconds
+2025-04-10 14:21:09,376 - root - INFO - Clip created successfully
+2025-04-10 14:21:09,376 - root - INFO - 
+Total clips created: 3
+2025-04-10 14:21:09,412 - root - INFO - 
+Exporting video to: D:AutomationProject\Output_Manager\outputs\final_video_entertainment.mp4
+2025-04-10 15:38:43,162 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 15:38:43,162 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 15:38:44,196 - root - INFO - Total audio duration: 43.02 seconds
+2025-04-10 15:38:44,196 - root - INFO - Number of scenes: 3
+2025-04-10 15:38:44,196 - root - INFO - Base duration per scene: 14.340000000000002 seconds
+2025-04-10 15:38:44,196 - root - INFO - 
+Processing Scene 1:
+2025-04-10 15:38:44,196 - root - INFO - Content: Artificial Intelligence and machine learning are revolutionizing every industry.
+From healthcare to entertainment, smart algorithms are changing how we live and work.
+2025-04-10 15:38:44,196 - root - INFO - Start Time: 0.0
+2025-04-10 15:38:44,196 - root - INFO - Duration: 14.340000000000002
+2025-04-10 15:38:44,198 - root - INFO - Generated background color: (14, 171, 96)
+2025-04-10 15:38:54,675 - root - INFO - Clip created successfully
+2025-04-10 15:38:54,676 - root - INFO - 
+Processing Scene 2:
+2025-04-10 15:38:54,676 - root - INFO - Content: Let's explore some exciting applications of AI:
+- Automated video production
+- Natural language processing
+- Computer vision
+- Robotics and automation
+2025-04-10 15:38:54,676 - root - INFO - Start Time: 14.340000000000002
+2025-04-10 15:38:54,676 - root - INFO - Duration: 14.340000000000002
+2025-04-10 15:38:54,676 - root - INFO - Generated background color: (21, 114, 181)
+2025-04-10 15:39:05,179 - root - INFO - Clip created successfully
+2025-04-10 15:39:05,180 - root - INFO - 
+Processing Scene 3:
+2025-04-10 15:39:05,180 - root - INFO - Content: The future holds endless possibilities. As technology evolves,
+we'll see even more amazing applications that enhance our daily lives.
+2025-04-10 15:39:05,180 - root - INFO - Start Time: 28.680000000000003
+2025-04-10 15:39:05,180 - root - INFO - Duration: 14.340000000000002
+2025-04-10 15:39:05,180 - root - INFO - Generated background color: (8, 183, 219)
+2025-04-10 15:39:14,418 - root - INFO - Clip created successfully
+2025-04-10 15:39:14,418 - root - INFO - 
+Total clips created: 3
+2025-04-10 15:39:14,460 - root - INFO - 
+Exporting video to: D:AutomationProject\Output_Manager\outputs\final_video_entertainment.mp4
+2025-04-10 16:14:55,583 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:14:55,584 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:39:36,378 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:39:36,378 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:40:17,517 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:40:17,517 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:42:10,343 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:42:10,344 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:45:33,393 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:45:33,393 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:46:14,091 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:46:14,091 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:51:45,168 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:51:45,168 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:54:02,551 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:54:02,551 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'
+2025-04-10 16:56:39,601 - comtypes.client._code_cache - INFO - Imported existing <module 'comtypes.gen' from 'D:\\AutomationProject\\.venv\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-04-10 16:56:39,602 - comtypes.client._code_cache - INFO - Using writeable comtypes cache directory: 'D:\AutomationProject\.venv\Lib\site-packages\comtypes\gen'

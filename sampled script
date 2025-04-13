@@ -1,0 +1,199 @@
+D:\AutomationProject\.venv\Scripts\python.exe D:\AutomationProject\main.py
+
+=== Script Generation ===
+1. Generate from template
+2. Manual input
+
+Select option (1-2): 2
+
+Enter your script:
+Use [Scene Name] to start new scenes
+Use 'Visual:', 'Voice-over:', and 'On-screen text:' to specify content
+Press Enter twice when done
+
+[Opening Scene – 0:00 to 0:05]
+
+Visual: Energetic, modern animation with your logo appearing on screen.
+
+Voice-over/Text On Screen:
+"Welcome to [Your Brand Name] – where innovation meets impact."
+
+[Introduction – 0:06 to 0:20]
+
+Visual: Dynamic transitions featuring snippets of digital marketing trends (social media icons, data graphs, engaging UI animations).
+
+Voice-over:
+"In today's fast-paced digital world, reaching your audience with the right message is more critical than ever. At [Your Brand Name], we empower you with cutting-edge strategies and tools to drive your brand forward."
+
+On-screen text:
+
+"Innovative"
+
+"Impactful"
+
+"Results-Driven"
+
+[Problem Statement – 0:21 to 0:35]
+
+Visual: Footage of a busy digital landscape with overflowing information, blurred social media feeds, and data overload.
+
+Voice-over:
+"Are you struggling to cut through the noise? Is your brand lost in a sea of competitors?"
+
+On-screen text:
+"Overwhelmed by digital noise?"
+
+[Solution/Value Proposition – 0:36 to 0:55]
+
+Visual: Shift to clear, engaging graphics showing clear data, targeted messaging, and positive brand transformations.
+
+Voice-over:
+"We offer tailored digital marketing solutions that deliver measurable results. From strategy to execution, our innovative approach ensures your message reaches the right audience at the right time."
+
+On-screen text:
+"Tailored Strategies" | "Measurable Results" | "Innovative Approach"
+
+[Feature Highlights – 0:56 to 1:20]
+
+Visual: Split-screen showing dynamic dashboards, creative content examples, social media engagement, and automation in action.
+
+Voice-over:
+"Whether you’re a startup or an established brand, our comprehensive services cover SEO, social media, content creation, and analytics—all powered by the latest technology to automate and optimize your campaigns."
+
+Bullet points On-screen:
+
+"SEO & Content Strategy"
+
+"Social Media Marketing"
+
+"Advanced Analytics & Automation"
+
+[Testimonials/Case Studies – 1:21 to 1:35]
+
+Visual: Brief clips or still images of client brands, short testimonials, or before-and-after case studies.
+
+Voice-over:
+"Our clients see real results—boosted engagement, increased traffic, and higher conversions."
+
+On-screen text:
+"Real Results, Real Impact"
+
+[Call-to-Action – 1:36 to 1:45]
+
+Visual: Return to your brand logo with contact information and social media handles.
+
+Voice-over:
+"Ready to transform your digital presence? Visit [yourwebsite.com] and join the digital revolution today!"
+
+On-screen text:
+"Visit [yourwebsite.com] – Transform Your Digital Future"
+
+[Closing Scene – 1:46 to 1:50]
+
+Visual: Smooth fade-out with your logo and a tagline such as:
+"Innovation. Impact. Growth."
+
+Background Music: Upbeat and motivational music fades out as the video ends.
+
+
+
+=== Script Preview ===
+Format: Professional Video Script
+Total Scenes: 8
+Estimated Duration: 0.0s
+
+Scenes:
+
+Scene 1: [Opening Scene – 0:00 to 0:05]
+Duration: 0:00 to 0:05]
+----------------------------------------
+
+On-screen text:
+- Welcome to [Your Brand Name] – where innovation meets impact.
+
+
+Scene 2: [Introduction – 0:06 to 0:20]
+Duration: 0:06 to 0:20]
+----------------------------------------
+
+On-screen text:
+- In today's fast-paced digital world, reaching your audience with the right message is more critical than ever. At [Your Brand Name], we empower you with cutting-edge strategies and tools to drive your brand forward.
+-
+- Innovative
+- Impactful
+- Results-Driven
+
+
+Scene 3: [Problem Statement – 0:21 to 0:35]
+Duration: 0:21 to 0:35]
+----------------------------------------
+
+On-screen text:
+- Are you struggling to cut through the noise? Is your brand lost in a sea of competitors?
+-
+- Overwhelmed by digital noise?
+
+
+Scene 4: [Solution/Value Proposition – 0:36 to 0:55]
+Duration: 0:36 to 0:55]
+----------------------------------------
+
+On-screen text:
+- We offer tailored digital marketing solutions that deliver measurable results. From strategy to execution, our innovative approach ensures your message reaches the right audience at the right time.
+-
+- Tailored Strategies" | "Measurable Results" | "Innovative Approach
+
+
+Scene 5: [Feature Highlights – 0:56 to 1:20]
+Duration: 0:56 to 1:20]
+----------------------------------------
+
+On-screen text:
+- Whether you’re a startup or an established brand, our comprehensive services cover SEO, social media, content creation, and analytics—all powered by the latest technology to automate and optimize your campaigns.
+-
+- SEO & Content Strategy
+- Social Media Marketing
+- Advanced Analytics & Automation
+
+
+Scene 6: [Testimonials/Case Studies – 1:21 to 1:35]
+Duration: 1:21 to 1:35]
+----------------------------------------
+
+On-screen text:
+- Our clients see real results—boosted engagement, increased traffic, and higher conversions.
+-
+- Real Results, Real ImpactIMAGEMAGICK_BINARY: "C:\\Program Files\\ImageMagick-7.0.10-Q16\\magick.exe"IMAGEMAGICK_BINARY: "C:\\Program Files\\ImageMagick-7.0.10-Q16\\magick.exe"
+
+
+Scene 7: [Call-to-Action – 1:36 to 1:45]
+Duration: 1:36 to 1:45]
+----------------------------------------
+
+On-screen text:
+- Ready to transform your digital presence? Visit [yourwebsite.com] and join the digital revolution today!
+-
+- Visit [yourwebsite.com] – Transform Your Digital Future
+
+
+Scene 8: [Closing Scene – 1:46 to 1:50]
+Duration: 1:46 to 1:50]
+----------------------------------------
+
+On-screen text:
+- Innovation. Impact. Growth.
+
+
+Proceed with this script? (y/n): y
+Traceback (most recent call last):
+  File "D:\AutomationProject\main.py", line 258, in <module>
+    main()
+  File "D:\AutomationProject\main.py", line 238, in main
+    voice_id = select_voice()
+               ^^^^^^^^^^^^^^
+  File "D:\AutomationProject\main.py", line 118, in select_voice
+    voices = voice_system.get_available_voices()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'VoiceSystem' object has no attribute 'get_available_voices'. Did you mean: 'list_available_voices'?
+
+Process finished with exit code 1

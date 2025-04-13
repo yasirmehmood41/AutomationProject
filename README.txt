@@ -18,74 +18,107 @@ AutomationProject/
 │── main.py               # Entry point of the project
 └── .venv/                # Virtual environment (if applicable)
 
-Video Automation Project - README
-Overview
-This project automates the generation of short videos using a combination of text scripts, images/videos, and voice-over audio. It dynamically creates video scenes by overlaying subtitles onto backgrounds and synchronizing them with AI-generated or user-provided voiceovers.
+# Video Generation Automation Project
 
-Features Implemented
-Script-based video creation: Uses a structured text script to generate scenes.
+A powerful tool for automating video creation with script processing, voice-over generation, and dynamic video editing.
 
-Dynamic background selection: Fetches images/videos automatically or allows user-provided media.
+## Features
 
-Auto subtitle generation: Converts the script into text overlays.
+1. **Script Processing**:
+   - Manual script input
+   - Script pasting
+   - API-based script generation
+   - Scene parsing and formatting
 
-AI-generated voice-over: Uses text-to-speech for narration (replaceable with user audio).
+2. **Voice Generation**:
+   - Local TTS voices (Windows)
+   - ElevenLabs integration
+   - Multiple voice options
+   - Optional advanced features (Google Cloud, AWS Polly)
 
-Timeline-based video merging: Ensures smooth scene transitions and synchronization.
+3. **Video Processing**:
+   - Dynamic scene generation
+   - Text-to-speech synchronization
+   - Background color management
+   - Word highlighting effects
 
-Installation & Setup
-Prerequisites
-Python 3.x
+## Installation
 
-Required libraries:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/AutomationProject.git
+   cd AutomationProject
+   ```
 
-pip install moviepy gtts requests
-Setup Steps
-Clone the repository:
+2. Create a virtual environment:
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate
+   ```
 
-git clone <repo-url>
-cd video-automation
-Ensure dependencies are installed:
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-pip install -r requirements.txt
-Run the script:
+4. Set up environment variables:
+   - Create a `.env` file in the project root
+   - Add your API keys:
+     ```
+     ELEVENLABS_API_KEY=your_key_here
+     OPENAI_API_KEY=your_key_here
+     ```
 
-python main.py
-How It Works
-1. Input Data
-Script.txt: Contains scene descriptions and subtitles.
+## Usage
 
-Media (Images/Videos): Can be auto-fetched or user-provided.
+1. Run the main script:
+   ```bash
+   python main.py
+   ```
 
-Audio: AI-generated or user-uploaded voice-over.
+2. Follow the interactive prompts to:
+   - Input or generate script
+   - Select voice type
+   - Generate video
 
-2. Processing
-The script is divided into scenes.
+## Project Structure
 
-Backgrounds are assigned (either fetched dynamically or taken from local storage).
+```
+AutomationProject/
+├── Content_Engine/        # Script and content generation
+│   ├── api_generator.py   # API-based script generation
+│   ├── script_processor.py# Script parsing and processing
+│   └── template_manager.py# Template management
+├── Media_Handler/         # Audio and video processing
+│   ├── voice_system.py   # Voice generation system
+│   └── video_processor.py# Video creation and effects
+├── Output_Manager/        # Export and quality control
+│   └── export_manager.py # Video export handling
+├── main.py               # Main entry point
+└── requirements.txt      # Project dependencies
+```
 
-Text overlays (subtitles) are generated and placed on scenes.
+## Advanced Features
 
-Voice-over is created or synced if provided.
+Optional advanced features require additional dependencies:
+```bash
+pip install google-cloud-texttospeech boto3
+```
 
-Video scenes are merged into a final MP4 output.
+This enables:
+- Google Cloud TTS
+- AWS Polly
+- Voice cloning
+- Batch processing
 
-3. Output
-The final video is saved as output.mp4.
+## Contributing
 
-Future Enhancements
-API Integration for Media & Voice: Support for Unsplash, Pexels, and ElevenLabs for better voice generation.
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-Custom Voice Modulation: Ability to modify pitch, speed, and tone.
+## License
 
-Advanced Animations & Effects: Implement transitions, zoom effects, and motion graphics.
-
-GUI Development: User-friendly interface for non-coders to input script and generate videos easily.
-
-Contribution & Version Control
-Push your changes to Git after modifications:
-
-
-
-License
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the LICENSE file for details.
