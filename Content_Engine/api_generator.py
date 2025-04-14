@@ -1,6 +1,7 @@
 """Script generation with templates and internet search."""
 import os
 import json
+import yaml
 from typing import Dict, List
 from dataclasses import dataclass
 import openai
@@ -24,19 +25,51 @@ class ScriptGenerator:
         if self.api_key:
             openai.api_key = self.api_key
 
-        # Load templates from external JSON file
-        self.templates = self.load_templates("templates.json")
+        # Load config
+        self.config = self._load_config(config_path)
+        self.niche = self.config.get('project', {}).get('default_niche', 'tech')
+        
+        # Load templates based on niche
+        self.templates = self.load_templates_for_niche(self.niche)
 
-    def load_templates(self, path: str) -> Dict[str, ScriptTemplate]:
-        """Load script templates from a JSON file."""
+    def _load_config(self, config_path: str) -> Dict:
+        """Load configuration from YAML file."""
+        try:
+            with open(config_path, 'r') as file:
+                return yaml.safe_load(file)
+        except Exception as e:
+            raise ValueError(f"Error loading config file: {e}")
+
+    def load_templates_for_niche(self, niche: str) -> Dict[str, ScriptTemplate]:
+        """Load templates based on niche from either JSON or YAML file."""
+        # Try JSON first
+        json_path = f"templates/{niche}_script.json"
+        yaml_path = f"templates/{niche}_script.yaml"
+        
+        if os.path.exists(json_path):
+            return self._load_json_templates(json_path)
+        elif os.path.exists(yaml_path):
+            return self._load_yaml_templates(yaml_path)
+        else:
+            raise FileNotFoundError(f"No template file found for niche '{niche}' in either JSON or YAML format")
+
+    def _load_json_templates(self, path: str) -> Dict[str, ScriptTemplate]:
+        """Load templates from a JSON file."""
         try:
             with open(path, "r") as file:
                 templates_data = json.load(file)
                 return {key: ScriptTemplate(**value) for key, value in templates_data.items()}
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Template file not found: {path}")
         except json.JSONDecodeError:
             raise ValueError(f"Error decoding JSON from file: {path}")
+
+    def _load_yaml_templates(self, path: str) -> Dict[str, ScriptTemplate]:
+        """Load templates from a YAML file."""
+        try:
+            with open(path, "r") as file:
+                templates_data = yaml.safe_load(file)
+                return {key: ScriptTemplate(**value) for key, value in templates_data.items()}
+        except yaml.YAMLError:
+            raise ValueError(f"Error decoding YAML from file: {path}")
 
     def get_available_templates(self) -> List[Dict]:
         """Get list of available templates."""
