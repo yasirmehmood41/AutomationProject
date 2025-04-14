@@ -219,3 +219,11 @@ performance:
   threads: 4  # Number of parallel threads (0 = auto)
   preview_quality: "medium"  # Quality for previews: "low", "medium", "high"
   use_gpu: false  # Use GPU acceleration if available
+  voice-selection:
+    ElevenLabs: true
+
+  template-selection:
+    tech: true
+
+  export-settings:
+    resolution: 1080p
