@@ -8,6 +8,8 @@ import requests
 from pydub import AudioSegment
 import hashlib
 import re
+from abc import ABC, abstractmethod
+import yaml
 
 @dataclass
 class VoiceConfig:
@@ -19,15 +21,47 @@ class VoiceConfig:
     engine: str
     preview_text: str = "This is a sample voice preview."
 
-class VoiceSystem:
-    """Voice generation system."""
-    def __init__(self):
-        # Initialize local TTS engine
-        self.local_engine = pyttsx3.init()
+class VoiceBackend(ABC):
+    @abstractmethod
+    def generate_voice(self, text: str, voice_id: str) -> str:
+        pass
+
+class ElevenLabsVoiceBackend(VoiceBackend):
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+
+    def generate_voice(self, text: str, voice_id: str) -> str:
+        # Logic for generating voice using ElevenLabs
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id.replace('elevenlabs_', '')}"
+        headers = {
+            "Accept": "audio/mpeg",
+            "Content-Type": "application/json",
+            "xi-api-key": self.api_key
+        }
+        data = {
+            "text": text,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.75,
+                "similarity_boost": 0.75
+            }
+        }
         
-        # Configure local voices
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code == 200:
+            text_hash = hashlib.md5(text.encode()).hexdigest()[:10]
+            output_file = os.path.join("output_manager", "audio", f"{voice_id}_{text_hash}.mp3")
+            with open(output_file, 'wb') as f:
+                f.write(response.content)
+            return output_file
+        else:
+            raise Exception(f"ElevenLabs API error: {response.text}")
+
+class LocalTTSVoiceBackend(VoiceBackend):
+    def __init__(self):
+        self.engine = pyttsx3.init()
         self.local_voices = {}
-        for voice in self.local_engine.getProperty('voices'):
+        for voice in self.engine.getProperty('voices'):
             try:
                 # Use a simple name for local voices
                 voice_id = f"local_{len(self.local_voices) + 1}"
@@ -52,145 +86,61 @@ class VoiceSystem:
                 language="en-US",
                 engine="local"
             )
-        
-        # Placeholder for ElevenLabs integration
-        self.elevenlabs_voices = {}
-        
-        # Placeholder for future providers
-        self.future_providers = {}
-        
-        # Create output directory
-        os.makedirs("output_manager/audio", exist_ok=True)
-        os.makedirs("output_manager/temp", exist_ok=True)
-    
-    def load_elevenlabs_voices(self):
-        # Logic to load ElevenLabs voices
-        api_key = os.getenv("ELEVENLABS_API_KEY")
-        if not api_key:
-            raise ValueError("ElevenLabs API key not found")
-        
-        url = "https://api.elevenlabs.io/v1/voices"
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "xi-api-key": api_key
-        }
-        
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            voices = response.json()
-            for voice in voices:
-                voice_id = f"elevenlabs_{voice['id']}"
-                self.elevenlabs_voices[voice_id] = VoiceConfig(
-                    id=voice_id,
-                    name=voice['name'],
-                    gender=voice['gender'],
-                    language=voice['language'],
-                    engine="elevenlabs"
-                )
-        else:
-            raise Exception(f"ElevenLabs API error: {response.text}")
-    
-    def load_future_provider_voices(self):
-        # Logic to load voices from future providers
-        pass
-    
-    def select_voice_backend(self, backend: str):
-        if backend == "local":
-            return self.local_voices
-        elif backend == "elevenlabs":
-            self.load_elevenlabs_voices()
-            return self.elevenlabs_voices
-        elif backend == "future":
-            self.load_future_provider_voices()
-            return self.future_providers
-        else:
-            raise ValueError(f"Unknown backend: {backend}")
-    
-    def list_available_voices(self, backend: str) -> Dict[str, VoiceConfig]:
-        """Get available voices."""
-        voices = self.select_voice_backend(backend)
-        return voices
-    
-    def generate_voice(self, text: str, voice_id: str, backend: str) -> str:
-        """Generate voice audio for text."""
-        if not text or not voice_id:
-            raise ValueError("Text and voice_id are required")
-        
-        voices = self.select_voice_backend(backend)
-        if voice_id not in voices:
+
+    def generate_voice(self, text: str, voice_id: str) -> str:
+        # Logic for generating voice using local TTS
+        if voice_id not in self.local_voices:
             raise ValueError(f"Unknown voice: {voice_id}")
         
-        voice = voices[voice_id]
+        voice = self.local_voices[voice_id]
         
         # Create a safe filename using hash of text
         text_hash = hashlib.md5(text.encode()).hexdigest()[:10]
         output_file = os.path.join("output_manager", "audio", f"{voice_id}_{text_hash}.mp3")
         
         try:
-            if voice.engine == "local":
-                # Use local TTS
-                temp_wav = os.path.join("output_manager", "temp", f"{voice_id}_{text_hash}.wav")
-                
-                # Set voice and save to WAV first
-                self.local_engine.setProperty('voice', next(v.id for v in self.local_engine.getProperty('voices')))
-                self.local_engine.save_to_file(text, temp_wav)
-                self.local_engine.runAndWait()
-                
-                # Convert WAV to MP3 using pydub
-                if os.path.exists(temp_wav):
-                    audio = AudioSegment.from_wav(temp_wav)
-                    audio.export(output_file, format="mp3")
-                    os.remove(temp_wav)  # Clean up temp file
-                else:
-                    raise Exception("Failed to generate WAV file")
-                
-            elif voice.engine == "elevenlabs":
-                # Use ElevenLabs API
-                api_key = os.getenv("ELEVENLABS_API_KEY")
-                if not api_key:
-                    raise ValueError("ElevenLabs API key not found")
-                
-                url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id.replace('elevenlabs_', '')}"
-                headers = {
-                    "Accept": "audio/mpeg",
-                    "Content-Type": "application/json",
-                    "xi-api-key": api_key
-                }
-                data = {
-                    "text": text,
-                    "model_id": "eleven_monolingual_v1",
-                    "voice_settings": {
-                        "stability": 0.75,
-                        "similarity_boost": 0.75
-                    }
-                }
-                
-                response = requests.post(url, json=data, headers=headers)
-                if response.status_code == 200:
-                    with open(output_file, 'wb') as f:
-                        f.write(response.content)
-                else:
-                    raise Exception(f"ElevenLabs API error: {response.text}")
+            # Use local TTS
+            temp_wav = os.path.join("output_manager", "temp", f"{voice_id}_{text_hash}.wav")
+            
+            # Set voice and save to WAV first
+            self.engine.setProperty('voice', next(v.id for v in self.engine.getProperty('voices')))
+            self.engine.save_to_file(text, temp_wav)
+            self.engine.runAndWait()
+            
+            # Convert WAV to MP3 using pydub
+            if os.path.exists(temp_wav):
+                audio = AudioSegment.from_wav(temp_wav)
+                audio.export(output_file, format="mp3")
+                os.remove(temp_wav)  # Clean up temp file
+            else:
+                raise Exception("Failed to generate WAV file")
             
             return output_file
             
         except Exception as e:
             print(f"Error generating voice: {str(e)}")
-            # Fallback to local TTS
-            if voice.engine != "local":
-                print("Falling back to local TTS...")
-                return self.generate_voice(text, list(self.local_voices.keys())[0], "local")
             raise
-    
-    def generate_voice_for_scenes(self, scenes: List[Dict], voice_id: str, backend: str) -> str:
-        """Generate voice audio for multiple scenes."""
+
+class VoiceSystem:
+    """Voice generation system."""
+    def __init__(self, config):
+        self.config = config
+        self.backend = self._load_backend(config['voice']['backend'])
+
+    def _load_backend(self, backend_name: str) -> VoiceBackend:
+        if backend_name == 'elevenlabs':
+            return ElevenLabsVoiceBackend(
+                api_key=self.config['voice']['elevenlabs']['api_key']
+            )
+        elif backend_name == 'local':
+            return LocalTTSVoiceBackend()
+        else:
+            raise ValueError(f"Unknown backend: {backend_name}")
+
+    def generate_voice_for_scenes(self, scenes: List[Dict], voice_id: str) -> str:
+        # Use the selected backend to generate voice
         if not scenes:
             raise ValueError("No scenes provided")
-        
-        voices = self.select_voice_backend(backend)
-        if voice_id not in voices:
-            raise ValueError(f"Voice ID {voice_id} not found in backend {backend}")
         
         # Create temporary directory for scene audio
         temp_dir = "output_manager/temp"
@@ -202,7 +152,7 @@ class VoiceSystem:
             if scene.get('voiceover'):
                 try:
                     # Generate audio for scene
-                    scene_file = self.generate_voice(scene['voiceover'], voice_id, backend)
+                    scene_file = self.backend.generate_voice(scene['voiceover'], voice_id)
                     if os.path.exists(scene_file):  # Only add if file was created
                         scene_files.append(scene_file)
                 except Exception as e:
@@ -235,43 +185,14 @@ class VoiceSystem:
             print(f"Error combining audio: {str(e)}")
             # Return first scene audio as fallback
             return scene_files[0] if scene_files else None
-    
-    def preview_voice(self, voice_id: str, backend: str, text: Optional[str] = None) -> str:
-        """Generate a voice preview."""
-        if not text:
-            voices = self.select_voice_backend(backend)
-            voice = voices.get(voice_id)
-            if not voice:
-                raise ValueError(f"Unknown voice: {voice_id}")
-            text = voice.preview_text
-        
-        return self.generate_voice(text, voice_id, backend)
 
 if __name__ == "__main__":
+    # Load config
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+
+    # Initialize voice system
+    voice_system = VoiceSystem(config)
     # Example usage
-    voice_system = VoiceSystem()
-    
-    # List available voices
-    voices = voice_system.list_available_voices("local")
-    print("\nAvailable local voices:")
-    for voice_id, config in voices.items():
-        print(f"- {config.name} ({config.gender}, {config.language}, {config.engine})")
-    
-    voices = voice_system.list_available_voices("elevenlabs")
-    print("\nAvailable ElevenLabs voices:")
-    for voice_id, config in voices.items():
-        print(f"- {config.name} ({config.gender}, {config.language}, {config.engine})")
-    
-    # Generate preview
-    preview_file = voice_system.preview_voice("local_1", "local")
-    if preview_file:
-        print(f"\nPreview generated: {preview_file}")
-    
-    # Generate voice
-    voice_file = voice_system.generate_voice(
-        "Welcome to the automated video generation system.",
-        "local_1",
-        "local"
-    )
-    if voice_file:
-        print(f"\nVoice generated: {voice_file}")
+    scenes = [{'voiceover': 'Hello world'}]
+    voice_system.generate_voice_for_scenes(scenes, "local_1")
