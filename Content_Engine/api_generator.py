@@ -1,6 +1,6 @@
 """Script generation with templates and internet search."""
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dataclasses import dataclass
 import openai
 import requests
