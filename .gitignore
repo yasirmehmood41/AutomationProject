@@ -1,2 +1,4 @@
 # created by virtualenv automatically
+# Ignore entire .venv directory
+.venv/
 .venv/Lib
