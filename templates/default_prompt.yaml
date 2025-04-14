@@ -1,0 +1,4 @@
+prompt: |
+  Write a {tone} script for the topic: "{query}".
+  Use the following keywords if possible: {keywords}
+  Structure it clearly and keep it {length}.

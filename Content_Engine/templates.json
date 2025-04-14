@@ -1,0 +1,30 @@
+{
+    "product_demo": {
+        "id": "product_demo",
+        "name": "Product Demo",
+        "description": "Showcase product features and benefits",
+        "style": "professional",
+        "fields": [
+            {"id": "product_name", "name": "Product Name"},
+            {"id": "key_features", "name": "Key Features (comma-separated)"},
+            {"id": "target_audience", "name": "Target Audience"},
+            {"id": "call_to_action", "name": "Call to Action"}
+        ],
+        "prompt_template": "Create a product demo script for {product_name}. Features: {key_features}. Target: {target_audience}. CTA: {call_to_action}",
+        "example": "Scene 1: [Product Shot]\nIntroducing our product..."
+    },
+    "explainer": {
+        "id": "explainer",
+        "name": "Explainer Video",
+        "description": "Break down complex concepts simply",
+        "style": "educational",
+        "fields": [
+            {"id": "topic", "name": "Topic"},
+            {"id": "complexity", "name": "Complexity Level (beginner/intermediate/advanced)"},
+            {"id": "key_points", "name": "Key Points (comma-separated)"},
+            {"id": "duration", "name": "Target Duration (minutes)"}
+        ],
+        "prompt_template": "Create an explainer video on {topic}. Complexity: {complexity}. Key points: {key_points}. Duration: {duration} minutes.",
+        "example": "Scene 1: [Introduction]\nExplaining the topic..."
+    }
+}

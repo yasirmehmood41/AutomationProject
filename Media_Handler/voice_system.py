@@ -53,58 +53,75 @@ class VoiceSystem:
                 engine="local"
             )
         
-        # Configure ElevenLabs voices
-        self.elevenlabs_voices = {
-            "elevenlabs_josh": VoiceConfig(
-                id="elevenlabs_josh",
-                name="Josh",
-                gender="male",
-                language="en-US",
-                engine="elevenlabs"
-            ),
-            "elevenlabs_rachel": VoiceConfig(
-                id="elevenlabs_rachel",
-                name="Rachel",
-                gender="female",
-                language="en-US",
-                engine="elevenlabs"
-            ),
-            "elevenlabs_sam": VoiceConfig(
-                id="elevenlabs_sam",
-                name="Sam",
-                gender="male",
-                language="en-US",
-                engine="elevenlabs"
-            ),
-            "elevenlabs_emily": VoiceConfig(
-                id="elevenlabs_emily",
-                name="Emily",
-                gender="female",
-                language="en-US",
-                engine="elevenlabs"
-            )
-        }
+        # Placeholder for ElevenLabs integration
+        self.elevenlabs_voices = {}
         
-        # Combine all voices
-        self.voices = {**self.local_voices, **self.elevenlabs_voices}
+        # Placeholder for future providers
+        self.future_providers = {}
         
         # Create output directory
         os.makedirs("output_manager/audio", exist_ok=True)
         os.makedirs("output_manager/temp", exist_ok=True)
     
-    def list_available_voices(self) -> Dict[str, VoiceConfig]:
-        """Get available voices."""
-        return self.voices
+    def load_elevenlabs_voices(self):
+        # Logic to load ElevenLabs voices
+        api_key = os.getenv("ELEVENLABS_API_KEY")
+        if not api_key:
+            raise ValueError("ElevenLabs API key not found")
+        
+        url = "https://api.elevenlabs.io/v1/voices"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "xi-api-key": api_key
+        }
+        
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            voices = response.json()
+            for voice in voices:
+                voice_id = f"elevenlabs_{voice['id']}"
+                self.elevenlabs_voices[voice_id] = VoiceConfig(
+                    id=voice_id,
+                    name=voice['name'],
+                    gender=voice['gender'],
+                    language=voice['language'],
+                    engine="elevenlabs"
+                )
+        else:
+            raise Exception(f"ElevenLabs API error: {response.text}")
     
-    def generate_voice(self, text: str, voice_id: str) -> str:
+    def load_future_provider_voices(self):
+        # Logic to load voices from future providers
+        pass
+    
+    def select_voice_backend(self, backend: str):
+        if backend == "local":
+            return self.local_voices
+        elif backend == "elevenlabs":
+            self.load_elevenlabs_voices()
+            return self.elevenlabs_voices
+        elif backend == "future":
+            self.load_future_provider_voices()
+            return self.future_providers
+        else:
+            raise ValueError(f"Unknown backend: {backend}")
+    
+    def list_available_voices(self, backend: str) -> Dict[str, VoiceConfig]:
+        """Get available voices."""
+        voices = self.select_voice_backend(backend)
+        return voices
+    
+    def generate_voice(self, text: str, voice_id: str, backend: str) -> str:
         """Generate voice audio for text."""
         if not text or not voice_id:
             raise ValueError("Text and voice_id are required")
         
-        if voice_id not in self.voices:
+        voices = self.select_voice_backend(backend)
+        if voice_id not in voices:
             raise ValueError(f"Unknown voice: {voice_id}")
         
-        voice = self.voices[voice_id]
+        voice = voices[voice_id]
         
         # Create a safe filename using hash of text
         text_hash = hashlib.md5(text.encode()).hexdigest()[:10]
@@ -163,13 +180,17 @@ class VoiceSystem:
             # Fallback to local TTS
             if voice.engine != "local":
                 print("Falling back to local TTS...")
-                return self.generate_voice(text, list(self.local_voices.keys())[0])
+                return self.generate_voice(text, list(self.local_voices.keys())[0], "local")
             raise
     
-    def generate_voice_for_scenes(self, scenes: List[Dict], voice_id: str) -> str:
+    def generate_voice_for_scenes(self, scenes: List[Dict], voice_id: str, backend: str) -> str:
         """Generate voice audio for multiple scenes."""
         if not scenes:
             raise ValueError("No scenes provided")
+        
+        voices = self.select_voice_backend(backend)
+        if voice_id not in voices:
+            raise ValueError(f"Voice ID {voice_id} not found in backend {backend}")
         
         # Create temporary directory for scene audio
         temp_dir = "output_manager/temp"
@@ -181,7 +202,7 @@ class VoiceSystem:
             if scene.get('voiceover'):
                 try:
                     # Generate audio for scene
-                    scene_file = self.generate_voice(scene['voiceover'], voice_id)
+                    scene_file = self.generate_voice(scene['voiceover'], voice_id, backend)
                     if os.path.exists(scene_file):  # Only add if file was created
                         scene_files.append(scene_file)
                 except Exception as e:
@@ -215,35 +236,42 @@ class VoiceSystem:
             # Return first scene audio as fallback
             return scene_files[0] if scene_files else None
     
-    def preview_voice(self, voice_id: str, text: Optional[str] = None) -> str:
+    def preview_voice(self, voice_id: str, backend: str, text: Optional[str] = None) -> str:
         """Generate a voice preview."""
         if not text:
-            voice = self.voices.get(voice_id)
+            voices = self.select_voice_backend(backend)
+            voice = voices.get(voice_id)
             if not voice:
                 raise ValueError(f"Unknown voice: {voice_id}")
             text = voice.preview_text
         
-        return self.generate_voice(text, voice_id)
+        return self.generate_voice(text, voice_id, backend)
 
 if __name__ == "__main__":
     # Example usage
     voice_system = VoiceSystem()
     
     # List available voices
-    voices = voice_system.list_available_voices()
-    print("\nAvailable voices:")
+    voices = voice_system.list_available_voices("local")
+    print("\nAvailable local voices:")
+    for voice_id, config in voices.items():
+        print(f"- {config.name} ({config.gender}, {config.language}, {config.engine})")
+    
+    voices = voice_system.list_available_voices("elevenlabs")
+    print("\nAvailable ElevenLabs voices:")
     for voice_id, config in voices.items():
         print(f"- {config.name} ({config.gender}, {config.language}, {config.engine})")
     
     # Generate preview
-    preview_file = voice_system.preview_voice("local_1")
+    preview_file = voice_system.preview_voice("local_1", "local")
     if preview_file:
         print(f"\nPreview generated: {preview_file}")
     
     # Generate voice
     voice_file = voice_system.generate_voice(
         "Welcome to the automated video generation system.",
-        "local_1"
+        "local_1",
+        "local"
     )
     if voice_file:
         print(f"\nVoice generated: {voice_file}")

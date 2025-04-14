@@ -1,11 +1,11 @@
 """Script generation with templates and internet search."""
 import os
+import json
 from typing import Dict, List
 from dataclasses import dataclass
 import openai
 import requests
 from bs4 import BeautifulSoup
-import json
 from urllib.parse import quote_plus
 
 @dataclass
@@ -19,98 +19,25 @@ class ScriptTemplate:
     example: str
 
 class ScriptGenerator:
-    def __init__(self):
+    def __init__(self, config_path="config.yaml"):
         self.api_key = os.getenv("OPENAI_API_KEY")
         if self.api_key:
             openai.api_key = self.api_key
-        
-        self.templates = {
-            "product_demo": ScriptTemplate(
-                id="product_demo",
-                name="Product Demo",
-                description="Showcase product features and benefits",
-                style="professional",
-                fields=[
-                    {"id": "product_name", "name": "Product Name"},
-                    {"id": "key_features", "name": "Key Features (comma-separated)"},
-                    {"id": "target_audience", "name": "Target Audience"},
-                    {"id": "call_to_action", "name": "Call to Action"}
-                ],
-                prompt_template="Create a product demo script for {product_name}. Features: {key_features}. Target: {target_audience}. CTA: {call_to_action}",
-                example="Scene 1: [Product Shot]\nIntroducing our product..."
-            ),
-            "explainer": ScriptTemplate(
-                id="explainer",
-                name="Explainer Video",
-                description="Break down complex concepts simply",
-                style="educational",
-                fields=[
-                    {"id": "topic", "name": "Topic"},
-                    {"id": "complexity", "name": "Complexity Level (beginner/intermediate/advanced)"},
-                    {"id": "key_points", "name": "Key Points (comma-separated)"},
-                    {"id": "duration", "name": "Target Duration (minutes)"}
-                ],
-                prompt_template="Create an explainer video script about {topic} at {complexity} level covering: {key_points}",
-                example="Scene 1: [Introduction]\nToday we'll explore..."
-            ),
-            "vlog": ScriptTemplate(
-                id="vlog",
-                name="Vlog Style",
-                description="Personal, engaging storytelling format",
-                style="casual",
-                fields=[
-                    {"id": "topic", "name": "Topic"},
-                    {"id": "mood", "name": "Mood (fun/serious/inspirational)"},
-                    {"id": "story_points", "name": "Story Points (comma-separated)"},
-                    {"id": "outro", "name": "Call to Action"}
-                ],
-                prompt_template="Create a {mood} vlog script about {topic} covering: {story_points}. Outro: {outro}",
-                example="Scene 1: [Intro Shot]\nHey everyone! Welcome back..."
-            ),
-            "interview": ScriptTemplate(
-                id="interview",
-                name="Interview Format",
-                description="Q&A style with expert insights",
-                style="professional",
-                fields=[
-                    {"id": "topic", "name": "Interview Topic"},
-                    {"id": "expert_background", "name": "Expert's Background"},
-                    {"id": "questions", "name": "Key Questions (comma-separated)"},
-                    {"id": "duration", "name": "Target Duration (minutes)"}
-                ],
-                prompt_template="Create an interview script about {topic} with an expert in {expert_background}. Questions: {questions}",
-                example="Scene 1: [Studio Shot]\nWelcome to our show..."
-            ),
-            "story": ScriptTemplate(
-                id="story",
-                name="Storytelling",
-                description="Narrative-driven content",
-                style="cinematic",
-                fields=[
-                    {"id": "story_type", "name": "Story Type (case study/journey/transformation)"},
-                    {"id": "main_character", "name": "Main Character/Subject"},
-                    {"id": "key_events", "name": "Key Events (comma-separated)"},
-                    {"id": "message", "name": "Core Message"}
-                ],
-                prompt_template="Create a {story_type} story about {main_character} with events: {key_events}. Message: {message}",
-                example="Scene 1: [Opening Shot]\nThis is a story of..."
-            ),
-            "news": ScriptTemplate(
-                id="news",
-                name="News Report",
-                description="Professional news coverage style",
-                style="broadcast",
-                fields=[
-                    {"id": "headline", "name": "Headline"},
-                    {"id": "key_points", "name": "Key Points (comma-separated)"},
-                    {"id": "sources", "name": "Sources (comma-separated)"},
-                    {"id": "angle", "name": "Story Angle"}
-                ],
-                prompt_template="Create a news report script about: {headline}. Key points: {key_points}. Sources: {sources}. Angle: {angle}",
-                example="Scene 1: [News Desk]\nBreaking news..."
-            )
-        }
-    
+
+        # Load templates from external JSON file
+        self.templates = self.load_templates("templates.json")
+
+    def load_templates(self, path: str) -> Dict[str, ScriptTemplate]:
+        """Load script templates from a JSON file."""
+        try:
+            with open(path, "r") as file:
+                templates_data = json.load(file)
+                return {key: ScriptTemplate(**value) for key, value in templates_data.items()}
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Template file not found: {path}")
+        except json.JSONDecodeError:
+            raise ValueError(f"Error decoding JSON from file: {path}")
+
     def get_available_templates(self) -> List[Dict]:
         """Get list of available templates."""
         return [
@@ -123,30 +50,29 @@ class ScriptGenerator:
             }
             for t in self.templates.values()
         ]
-    
-    def generate_script(self, template: str, additional_context: Dict) -> str:
+
+    def generate_script(self, template_id: str, context: Dict) -> str:
         """Generate script using specified template and context."""
-        if template not in self.templates:
-            raise ValueError(f"Unknown template: {template}")
-        
-        template_obj = self.templates[template]
-        
+        if template_id not in self.templates:
+            raise ValueError(f"Unknown template ID: {template_id}")
+
+        template = self.templates[template_id]
         try:
             # Search internet for relevant information
-            search_results = self._search_internet(additional_context)
-            
+            search_results = self._search_internet(context)
+
             # Format prompt with search results
-            prompt = template_obj.prompt_template.format(**additional_context)
+            prompt = template.prompt_template.format(**context)
             if search_results:
                 print("\nFound relevant information:")
                 print(search_results)
                 prompt += f"\n\nAdditional context from web search:\n{search_results}"
-            
+
             if not self.api_key:
                 # Fallback to template-based generation
                 print("No OpenAI API key found. Using template-based generation.")
-                return self._generate_template_script(template_obj, additional_context)
-            
+                return self._generate_template_script(template, context)
+
             # Generate script using OpenAI
             response = openai.ChatCompletion.create(
                 model="gpt-4",
@@ -157,23 +83,25 @@ class ScriptGenerator:
                 temperature=0.7,
                 max_tokens=2000
             )
-            
+
             return response.choices[0].message.content
-            
+
+        except KeyError as e:
+            raise ValueError(f"Missing required context field: {e}")
         except Exception as e:
             print(f"Error generating script: {str(e)}")
             # Fallback to template on error
-            return self._generate_template_script(template_obj, additional_context)
-    
+            return self._generate_template_script(template, context)
+
     def _search_internet(self, context: Dict) -> str:
         """Search internet for relevant information."""
         try:
             # Combine context values into search query
             query = " ".join(str(v) for v in context.values() if v)
-            
+
             # Try multiple search endpoints
             results = []
-            
+
             # Try Google News
             try:
                 url = f"https://news.google.com/rss/search?q={quote_plus(query)}"
@@ -187,7 +115,7 @@ class ScriptGenerator:
                         results.append(f"- {title}: {desc}")
             except Exception as e:
                 print(f"Google News search failed: {str(e)}")
-            
+
             # Try DuckDuckGo
             try:
                 url = f"https://api.duckduckgo.com/?q={quote_plus(query)}&format=json"
@@ -199,7 +127,7 @@ class ScriptGenerator:
                             results.append(f"- {topic.get('Text', '')}")
             except Exception as e:
                 print(f"DuckDuckGo search failed: {str(e)}")
-            
+
             # Try Wikipedia
             try:
                 url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={quote_plus(query)}&format=json"
@@ -211,13 +139,13 @@ class ScriptGenerator:
                             results.append(f"- {result.get('title', '')}: {result.get('snippet', '')}")
             except Exception as e:
                 print(f"Wikipedia search failed: {str(e)}")
-            
+
             return "\n".join(results) if results else ""
-            
+
         except Exception as e:
             print(f"Error searching internet: {str(e)}")
             return ""
-    
+
     def _generate_template_script(self, template: ScriptTemplate, context: Dict) -> str:
         """Generate a basic script using the template example."""
         if template.id == "product_demo":
@@ -233,7 +161,7 @@ Perfect for {context['target_audience']}, this product will transform your exper
 
 Scene 4: [Call to Action]
 {context['call_to_action']}"""
-        
+
         elif template.id == "explainer":
             return f"""Scene 1: [Introduction]
 Today, we'll explore {context['topic']} at a {context['complexity']} level.
@@ -244,7 +172,7 @@ Let's break down the main concepts:
 
 Scene 3: [Summary]
 Now you understand the basics of {context['topic']}."""
-        
+
         elif template.id == "vlog":
             return f"""Scene 1: [Intro Shot]
 Hey everyone! Welcome back to the channel. Today we're talking about {context['topic']}.
@@ -254,7 +182,7 @@ Scene 2: [Main Content]
 
 Scene 3: [Outro]
 {context['outro']}"""
-        
+
         elif template.id == "interview":
             return f"""Scene 1: [Studio Shot]
 Welcome to our show. Today we're joined by an expert in {context['topic']}.
@@ -264,7 +192,7 @@ Scene 2: [Interview]
 
 Scene 3: [Closing]
 Thank you for sharing your insights with us."""
-        
+
         elif template.id == "story":
             return f"""Scene 1: [Opening Shot]
 This is the story of {context['main_character']}.
@@ -274,7 +202,7 @@ Scene 2: [Story Development]
 
 Scene 3: [Conclusion]
 {context['message']}"""
-        
+
         elif template.id == "news":
             return f"""Scene 1: [News Desk]
 Breaking news: {context['headline']}
@@ -284,16 +212,16 @@ Scene 2: [Report]
 
 Scene 3: [Sources]
 According to {context['sources']}."""
-        
+
         else:
             return template.example
-    
+
     def _format_list(self, items: str, prefix: str = "-") -> str:
         """Format a comma-separated string into a bulleted list."""
         if isinstance(items, str):
             items = [item.strip() for item in items.split(",")]
         return "\n".join(f"{prefix} {item}" for item in items)
-    
+
     def get_script_preview(self, script: str) -> Dict:
         """Generate preview information for a script."""
         try:
@@ -301,7 +229,7 @@ According to {context['sources']}."""
                 # Fallback to basic preview if no API key
                 print("No OpenAI API key found. Using basic preview generation.")
                 return self._generate_basic_preview(script)
-            
+
             # Use OpenAI to analyze script
             response = openai.ChatCompletion.create(
                 model="gpt-4",
@@ -312,20 +240,20 @@ According to {context['sources']}."""
                 temperature=0.3,
                 max_tokens=1000
             )
-            
+
             # Parse analysis
             analysis = response.choices[0].message.content
             return self._parse_script_preview(analysis)
-            
+
         except Exception as e:
             print(f"Error generating preview: {str(e)}")
             return self._generate_basic_preview(script)
-    
+
     def _generate_basic_preview(self, script: str) -> Dict:
         """Generate basic preview information without API."""
         scenes = []
         current_scene = None
-        
+
         for line in script.split("\n"):
             if line.startswith("Scene"):
                 if current_scene:
@@ -340,22 +268,22 @@ According to {context['sources']}."""
                 current_scene["content"] += line + "\n"
                 current_scene["word_count"] = len(current_scene["content"].split())
                 current_scene["estimated_duration"] = current_scene["word_count"] / 2
-        
+
         if current_scene:
             scenes.append(current_scene)
-        
+
         return {
             "format": "Standard Video Script",
             "total_scenes": len(scenes),
             "estimated_duration": sum(s["estimated_duration"] for s in scenes),
             "scenes": scenes
         }
-    
+
     def _parse_script_preview(self, analysis: str) -> Dict:
         """Parse script analysis into preview format."""
         scenes = []
         current_scene = None
-        
+
         for line in analysis.split("\n"):
             if line.startswith("Scene"):
                 if current_scene:
@@ -370,10 +298,10 @@ According to {context['sources']}."""
                 current_scene["content"] += line + "\n"
                 current_scene["word_count"] = len(current_scene["content"].split())
                 current_scene["estimated_duration"] = current_scene["word_count"] / 2
-        
+
         if current_scene:
             scenes.append(current_scene)
-        
+
         return {
             "format": "Standard Video Script",
             "total_scenes": len(scenes),
@@ -384,23 +312,13 @@ According to {context['sources']}."""
 if __name__ == "__main__":
     # Example usage
     generator = ScriptGenerator()
-    
-    # List available templates
-    print("Available templates:", generator.get_available_templates())
-    
-    # Generate a script with preview
-    template_id = "product_demo"
-    additional_context = {
-        "product_name": "AI-Powered Video Editor",
-        "key_features": "AI-powered editing, automatic color correction, and audio ducking",
-        "target_audience": "Professional videographers and content creators",
-        "call_to_action": "Try it now and transform your video editing workflow!"
-    }
-    
-    script = generator.generate_script(template_id, additional_context)
-    print("\nGenerated Script:")
-    print(script)
-    
-    preview = generator.get_script_preview(script)
-    print("\nScript Preview:")
-    print(json.dumps(preview, indent=2))
+    try:
+        script = generator.generate_script("product_demo", {
+            "product_name": "Gizmo",
+            "key_features": "fast, efficient",
+            "target_audience": "tech enthusiasts",
+            "call_to_action": "buy now"
+        })
+        print(script)
+    except Exception as e:
+        print(f"Error generating script: {e}")
