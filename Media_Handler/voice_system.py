@@ -11,6 +11,11 @@ import re
 from abc import ABC, abstractmethod
 import yaml
 from pathlib import Path
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @dataclass
 class VoiceConfig:
@@ -39,23 +44,45 @@ class VoiceBackend(ABC):
         backends = {
             'elevenlabs': ElevenLabsVoiceBackend,
             'local': LocalTTSVoiceBackend,
-            # Add more backends here as needed
         }
         
         backend_class = backends.get(provider.lower())
         if not backend_class:
             raise ValueError(f"Unsupported voice provider: {provider}")
         
-        return backend_class(config)
+        try:
+            return backend_class(config)
+        except Exception as e:
+            logger.warning(f"Failed to initialize {provider} backend: {e}")
+            if provider != 'local':
+                logger.info("Falling back to local TTS backend")
+                return LocalTTSVoiceBackend({})
+            raise
 
 class ElevenLabsVoiceBackend(VoiceBackend):
     def __init__(self, config: Dict):
+        """Initialize ElevenLabs backend."""
         self.api_key = config.get('api_key') or os.getenv("ELEVENLABS_API_KEY")
         if not self.api_key:
             raise ValueError("ElevenLabs API key not found in config or environment")
+        
+        # Test API key validity
+        self._test_api_key()
         self.voices = self._load_voices()
 
+    def _test_api_key(self):
+        """Test if the API key is valid."""
+        url = "https://api.elevenlabs.io/v1/voices"
+        headers = {
+            "Accept": "application/json",
+            "xi-api-key": self.api_key
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            raise ValueError("Invalid ElevenLabs API key")
+
     def _load_voices(self) -> Dict[str, VoiceConfig]:
+        """Load available voices from ElevenLabs API."""
         url = "https://api.elevenlabs.io/v1/voices"
         headers = {
             "Accept": "application/json",
@@ -64,16 +91,15 @@ class ElevenLabsVoiceBackend(VoiceBackend):
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
             raise Exception(f"ElevenLabs API error: {response.text}")
-
+        
         voices = {}
         for voice in response.json().get('voices', []):
-            voice_id = f"elevenlabs_{voice['voice_id']}"
-            voices[voice_id] = VoiceConfig(
-                id=voice_id,
+            voices[voice['voice_id']] = VoiceConfig(
+                id=voice['voice_id'],
                 name=voice['name'],
                 gender=voice.get('labels', {}).get('gender', 'unknown'),
                 language=voice.get('labels', {}).get('language', 'en'),
-                engine="elevenlabs"
+                engine='elevenlabs'
             )
         return voices
 
@@ -87,7 +113,7 @@ class ElevenLabsVoiceBackend(VoiceBackend):
         if voice_id not in self.voices:
             raise ValueError(f"Unknown voice: {voice_id}")
 
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id.replace('elevenlabs_', '')}"
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -117,14 +143,16 @@ class ElevenLabsVoiceBackend(VoiceBackend):
 
 class LocalTTSVoiceBackend(VoiceBackend):
     def __init__(self, config: Dict):
+        self.config = config  # 👈 Yeh line add ki gayi hai
         self.engine = pyttsx3.init()
         self.voices = self._load_voices()
-        
+
         voice_name = config.get('voice_name', 'Default')
         for voice in self.engine.getProperty('voices'):
             if voice_name.lower() in voice.name.lower():
                 self.engine.setProperty('voice', voice.id)
                 break
+
 
     def _load_voices(self) -> Dict[str, VoiceConfig]:
         voices = {}
@@ -193,10 +221,12 @@ class VoiceSystem:
             with open(config_path, 'r') as file:
                 config = yaml.safe_load(file)
                 if 'voice' not in config:
-                    raise ValueError("Missing 'voice' section in config")
+                    logger.warning("Missing 'voice' section in config, using defaults")
+                    config['voice'] = {'provider': 'local'}
                 return config
         except Exception as e:
-            raise ValueError(f"Error loading config file: {e}")
+            logger.error(f"Error loading config file: {e}")
+            return {'voice': {'provider': 'local'}}
 
     def _initialize_backend(self) -> VoiceBackend:
         """Initialize the appropriate voice backend based on config."""
@@ -207,7 +237,11 @@ class VoiceSystem:
             provider_config = voice_config.get(provider, {})
             return VoiceBackend.create(provider, provider_config)
         except Exception as e:
-            raise ValueError(f"Failed to initialize voice backend '{provider}': {e}")
+            logger.error(f"Failed to initialize voice backend '{provider}': {e}")
+            if provider != 'local':
+                logger.info("Falling back to local TTS backend")
+                return VoiceBackend.create('local', {})
+            raise
 
     def _ensure_output_dir(self) -> str:
         """Ensure output directory exists and return its path."""

@@ -155,7 +155,12 @@ def main():
         # Generate voice-overs for each scene
         print("\nGenerating voice-overs...")
         try:
-            audio_files = voice_system.generate_voice_for_scenes(scenes, voice_id)
+            audio_files = []
+            for scene in scenes:
+                if 'text' in scene:
+                    audio_file = voice_system.backend.generate_voice(scene['text'], voice_id)
+                    if audio_file:
+                        audio_files.append(audio_file)
             print(f"Generated {len(audio_files)} audio files")
         except Exception as e:
             logger.error(f"Error generating voice-overs: {e}")
@@ -171,7 +176,10 @@ def main():
         print("\nProcessing video...")
         try:
             output_file = video_processor.process_video(scenes, audio_files, style)
-            print(f"\nVideo generated successfully: {output_file}")
+            if output_file:
+                print(f"\nVideo generated successfully: {output_file}")
+            else:
+                print("\nError: Failed to generate video")
         except Exception as e:
             logger.error(f"Error processing video: {e}")
             return

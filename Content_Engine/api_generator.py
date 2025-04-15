@@ -2,13 +2,28 @@
 import os
 import json
 import yaml
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Set
 from dataclasses import dataclass
 import openai
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 from pathlib import Path
+import logging
+import re
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@dataclass
+class TemplateField:
+    """Field in a script template."""
+    id: str
+    name: str
+    description: str
+    required: bool = True
+    default: str = ""
 
 @dataclass
 class ScriptTemplate:
@@ -17,11 +32,26 @@ class ScriptTemplate:
     name: str
     description: str
     style: str
-    fields: List[Dict]
     prompt_template: str
+    fields: List[TemplateField]
     example: str = ""
     niche: str = "general"
     version: str = "1.0"
+
+    def extract_field_names(self) -> Set[str]:
+        """Extract field names from the prompt template."""
+        return set(re.findall(r'\{(\w+)\}', self.prompt_template))
+
+    def validate_context(self, context: Dict[str, str]) -> Dict[str, str]:
+        """Validate and prepare context for template."""
+        required_fields = self.extract_field_names()
+        missing_fields = required_fields - set(context.keys())
+        
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+        
+        # Only include fields that are actually used in the template
+        return {k: v for k, v in context.items() if k in required_fields}
 
 class TemplateManager:
     """Manages loading and validation of templates."""
@@ -62,6 +92,56 @@ class TemplateManager:
         else:
             return self._load_yaml_templates(template_path)
 
+    def _extract_template_fields(self, template_str: str) -> List[TemplateField]:
+        """Extract fields from a template string."""
+        field_names = set(re.findall(r'\{(\w+)\}', template_str))
+        return [
+            TemplateField(
+                id=field,
+                name=field.replace('_', ' ').title(),
+                description=f"Enter the {field.replace('_', ' ')}",
+                required=True
+            )
+            for field in field_names
+        ]
+
+    def _process_templates(self, data: Dict, niche: str) -> Dict[str, ScriptTemplate]:
+        """Process and validate template data."""
+        templates = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                # Handle structured template
+                if 'prompt_template' not in value:
+                    value['prompt_template'] = str(value.get('template', ''))
+                
+                # Extract fields if not provided
+                if 'fields' not in value:
+                    value['fields'] = self._extract_template_fields(value['prompt_template'])
+                
+                # Add template metadata
+                value['id'] = key
+                value['name'] = value.get('name', key.replace('_', ' ').title())
+                value['description'] = value.get('description', f"{value['name']} template for {niche} niche")
+                value['style'] = value.get('style', 'default')
+                value['niche'] = niche
+                
+                templates[key] = ScriptTemplate(**value)
+            else:
+                # Handle simple string template
+                prompt_template = str(value)
+                fields = self._extract_template_fields(prompt_template)
+                
+                templates[key] = ScriptTemplate(
+                    id=key,
+                    name=key.replace('_', ' ').title(),
+                    description=f"{key.title()} template for {niche} niche",
+                    style="default",
+                    fields=fields,
+                    prompt_template=prompt_template,
+                    niche=niche
+                )
+        return templates
+
     def _load_json_templates(self, path: Path) -> Dict[str, ScriptTemplate]:
         """Load templates from a JSON file."""
         try:
@@ -79,34 +159,6 @@ class TemplateManager:
                 return self._process_templates(templates_data, path.stem.replace('_script', ''))
         except yaml.YAMLError as e:
             raise ValueError(f"Error decoding YAML from {path}: {e}")
-
-    def _process_templates(self, data: Dict, niche: str) -> Dict[str, ScriptTemplate]:
-        """Process and validate template data."""
-        templates = {}
-        for key, value in data.items():
-            if isinstance(value, dict):
-                # Ensure required fields are present
-                required_fields = ['name', 'description', 'style', 'fields', 'prompt_template']
-                missing_fields = [f for f in required_fields if f not in value]
-                if missing_fields:
-                    raise ValueError(f"Template '{key}' missing required fields: {missing_fields}")
-                
-                # Add template metadata
-                value['id'] = key
-                value['niche'] = niche
-                templates[key] = ScriptTemplate(**value)
-            else:
-                # Handle flat template structure (like in tech_script.yaml)
-                templates[key] = ScriptTemplate(
-                    id=key,
-                    name=key.title(),
-                    description=f"{key.title()} template for {niche} niche",
-                    style="default",
-                    fields=[],
-                    prompt_template=str(value),
-                    niche=niche
-                )
-        return templates
 
 class ScriptGenerator:
     """Generates scripts using templates and AI."""
@@ -128,16 +180,22 @@ class ScriptGenerator:
         # Cache available niches
         self.available_niches = self.template_manager.list_available_niches()
 
-    def _load_config(self, config_path: str) -> Dict:
-        """Load configuration from YAML file."""
-        try:
-            with open(config_path, 'r') as file:
-                config = yaml.safe_load(file)
-                if 'project' not in config:
-                    raise ValueError("Missing 'project' section in config")
-                return config
-        except Exception as e:
-            raise ValueError(f"Error loading config file: {e}")
+    def get_template_fields(self, template_id: str) -> List[Dict]:
+        """Get required fields for a template."""
+        if template_id not in self.templates:
+            raise ValueError(f"Unknown template ID: {template_id}")
+        
+        template = self.templates[template_id]
+        return [
+            {
+                "id": field.id,
+                "name": field.name,
+                "description": field.description,
+                "required": field.required,
+                "default": field.default
+            }
+            for field in template.fields
+        ]
 
     def get_available_templates(self, niche: Optional[str] = None) -> List[Dict]:
         """Get list of available templates for a specific niche or current niche."""
@@ -178,49 +236,30 @@ class ScriptGenerator:
         except Exception:
             return False
 
-    def generate_script(self, template_id: str, context: Dict) -> str:
+    def generate_script(self, template_id: str, context: Dict[str, str]) -> str:
         """Generate script using specified template and context."""
         if template_id not in self.templates:
             raise ValueError(f"Unknown template ID: {template_id}")
 
         template = self.templates[template_id]
         try:
-            # Search internet for relevant information
-            search_results = self._search_internet(context)
-
-            # Format prompt with search results
-            prompt = template.prompt_template.format(**context)
+            # Validate and prepare context
+            validated_context = template.validate_context(context)
+            
+            # Search internet for relevant information if needed
+            search_results = self._search_internet(validated_context)
             if search_results:
-                print("\nFound relevant information:")
-                print(search_results)
-                prompt += f"\n\nAdditional context from web search:\n{search_results}"
+                validated_context['search_results'] = search_results
 
-            if not self.api_key:
-                # Fallback to template-based generation
-                print("No OpenAI API key found. Using template-based generation.")
-                return self._generate_template_script(template, context)
-
-            # Generate script using OpenAI
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a professional video script writer."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=2000
-            )
-
-            return response.choices[0].message.content
-
+            # Format prompt with validated context
+            return template.prompt_template.format(**validated_context)
+            
         except KeyError as e:
-            raise ValueError(f"Missing required context field: {e}")
+            raise ValueError(f"Missing required field: {str(e).strip('')}")
         except Exception as e:
-            print(f"Error generating script: {str(e)}")
-            # Fallback to template on error
-            return self._generate_template_script(template, context)
+            raise ValueError(f"Error generating script: {e}")
 
-    def _search_internet(self, context: Dict) -> str:
+    def _search_internet(self, context: Dict[str, str]) -> str:
         """Search internet for relevant information."""
         try:
             # Combine context values into search query
@@ -241,7 +280,7 @@ class ScriptGenerator:
                         desc = item.description.text if item.description else ""
                         results.append(f"- {title}: {desc}")
             except Exception as e:
-                print(f"Google News search failed: {str(e)}")
+                logger.error(f"Google News search failed: {str(e)}")
 
             # Try DuckDuckGo
             try:
@@ -253,7 +292,7 @@ class ScriptGenerator:
                         for topic in data["RelatedTopics"][:3]:
                             results.append(f"- {topic.get('Text', '')}")
             except Exception as e:
-                print(f"DuckDuckGo search failed: {str(e)}")
+                logger.error(f"DuckDuckGo search failed: {str(e)}")
 
             # Try Wikipedia
             try:
@@ -265,96 +304,31 @@ class ScriptGenerator:
                         for result in data["query"]["search"][:3]:
                             results.append(f"- {result.get('title', '')}: {result.get('snippet', '')}")
             except Exception as e:
-                print(f"Wikipedia search failed: {str(e)}")
+                logger.error(f"Wikipedia search failed: {str(e)}")
 
             return "\n".join(results) if results else ""
 
         except Exception as e:
-            print(f"Error searching internet: {str(e)}")
+            logger.error(f"Error searching internet: {str(e)}")
             return ""
 
-    def _generate_template_script(self, template: ScriptTemplate, context: Dict) -> str:
-        """Generate a basic script using the template example."""
-        if template.id == "product_demo":
-            return f"""Scene 1: [Product Shot]
-Introducing {context['product_name']}, the revolutionary solution designed for {context['target_audience']}.
-
-Scene 2: [Feature Showcase]
-Let me show you our key features:
-{self._format_list(context['key_features'])}
-
-Scene 3: [Benefits]
-Perfect for {context['target_audience']}, this product will transform your experience.
-
-Scene 4: [Call to Action]
-{context['call_to_action']}"""
-
-        elif template.id == "explainer":
-            return f"""Scene 1: [Introduction]
-Today, we'll explore {context['topic']} at a {context['complexity']} level.
-
-Scene 2: [Key Points]
-Let's break down the main concepts:
-{self._format_list(context['key_points'])}
-
-Scene 3: [Summary]
-Now you understand the basics of {context['topic']}."""
-
-        elif template.id == "vlog":
-            return f"""Scene 1: [Intro Shot]
-Hey everyone! Welcome back to the channel. Today we're talking about {context['topic']}.
-
-Scene 2: [Main Content]
-{self._format_list(context['story_points'])}
-
-Scene 3: [Outro]
-{context['outro']}"""
-
-        elif template.id == "interview":
-            return f"""Scene 1: [Studio Shot]
-Welcome to our show. Today we're joined by an expert in {context['topic']}.
-
-Scene 2: [Interview]
-{self._format_list(context['questions'], prefix='Q:')}
-
-Scene 3: [Closing]
-Thank you for sharing your insights with us."""
-
-        elif template.id == "story":
-            return f"""Scene 1: [Opening Shot]
-This is the story of {context['main_character']}.
-
-Scene 2: [Story Development]
-{self._format_list(context['key_events'])}
-
-Scene 3: [Conclusion]
-{context['message']}"""
-
-        elif template.id == "news":
-            return f"""Scene 1: [News Desk]
-Breaking news: {context['headline']}
-
-Scene 2: [Report]
-{self._format_list(context['key_points'])}
-
-Scene 3: [Sources]
-According to {context['sources']}."""
-
-        else:
-            return template.example
-
-    def _format_list(self, items: str, prefix: str = "-") -> str:
-        """Format a comma-separated string into a bulleted list."""
-        if isinstance(items, str):
-            items = [item.strip() for item in items.split(",")]
-        return "\n".join(f"{prefix} {item}" for item in items)
+    def _load_config(self, config_path: str) -> Dict:
+        """Load configuration from YAML file."""
+        try:
+            with open(config_path, 'r') as file:
+                config = yaml.safe_load(file)
+                if 'project' not in config:
+                    raise ValueError("Missing 'project' section in config")
+                return config
+        except Exception as e:
+            raise ValueError(f"Error loading config file: {e}")
 
     def get_script_preview(self, script: str) -> Dict:
         """Generate preview information for a script."""
         try:
             if not self.api_key:
                 # Fallback to basic preview if no API key
-                print("No OpenAI API key found. Using basic preview generation.")
+                logger.info("No OpenAI API key found. Using basic preview generation.")
                 return self._generate_basic_preview(script)
 
             # Use OpenAI to analyze script
@@ -373,7 +347,7 @@ According to {context['sources']}."""
             return self._parse_script_preview(analysis)
 
         except Exception as e:
-            print(f"Error generating preview: {str(e)}")
+            logger.error(f"Error generating preview: {str(e)}")
             return self._generate_basic_preview(script)
 
     def _generate_basic_preview(self, script: str) -> Dict:
@@ -448,4 +422,4 @@ if __name__ == "__main__":
         })
         print(script)
     except Exception as e:
-        print(f"Error generating script: {e}")
+        logger.error(f"Error generating script: {e}")

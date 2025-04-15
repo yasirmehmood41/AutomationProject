@@ -1,7 +1,7 @@
 """Video processing module for generating video content."""
 import os
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -132,91 +132,103 @@ class VideoProcessor:
         # Convert to numpy array for MoviePy
         return np.array(img)
 
-    def process_video(self, scenes: List[Dict], audio_file: str = "", style_name: str = "modern") -> Optional[str]:
-        """Process scenes into a video."""
+    def process_video(self, scenes: List[Dict], audio_files: Union[str, List[str]], style_name: str = "modern") -> Optional[str]:
+        """Process scenes into a video.
+        
+        Args:
+            scenes: List of scene dictionaries with text and metadata
+            audio_files: Single audio file path or list of audio file paths (one per scene)
+            style_name: Name of the video style to use
+        
+        Returns:
+            Path to the generated video file, or None if processing failed
+        """
         try:
-            # Input validation
-            if not scenes or len(scenes) == 0:
-                print("Error: No scenes provided")
-                return None
-            
-            print(f"Processing {len(scenes)} scenes with {style_name} style")
             style = VideoStyle.get_style(style_name)
             scene_clips = []
             
-            # Process each scene
+            print(f"\nProcessing {len(scenes)} scenes with {style_name} style")
+            
             for i, scene in enumerate(scenes):
                 try:
                     print(f"\nProcessing scene {i+1}: {scene.get('name', 'Untitled')}")
                     
-                    # Calculate duration
-                    duration = 5.0  # Default 5 seconds
-                    if scene.get('timing') and 'to' in scene.get('timing'):
-                        try:
-                            parts = scene['timing'].split('to')
-                            start_time = float(parts[0].strip())
-                            end_time = float(parts[1].strip())
-                            duration = end_time - start_time
-                            duration = max(duration, 1.0)  # Minimum 1 second
-                            print(f"  Duration: {duration:.1f} seconds")
-                        except:
-                            print(f"  Invalid timing format, using default duration")
-                    
-                    # Create background clip
+                    # Create background
                     try:
-                        color = style.background_color.lstrip('#')
-                        rgb_color = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
+                        bg_color = style.background_color
+                        duration = scene.get('duration', 5)  # Default 5 seconds if not specified
+                        
+                        # Convert hex color to RGB
+                        if bg_color.startswith('#'):
+                            bg_color = bg_color[1:]
+                        rgb_color = tuple(int(bg_color[i:i+2], 16) for i in (0, 2, 4))
+                        
+                        # Create background clip with RGB color
                         bg_clip = ColorClip(
                             size=style.resolution,
                             color=rgb_color,
                             duration=duration
                         )
+                        clips = [bg_clip]
                         print("  Created background clip")
                         
-                        clips = [bg_clip]
+                        # Add text elements
+                        text_elements = scene.get('text', '').split('\n')
+                        print(f"  Adding {len(text_elements)} text elements")
                         
-                        # Add text clips
-                        if scene.get('text'):
-                            print(f"  Adding {len(scene['text'])} text elements")
-                            screen_height = style.resolution[1]
-                            margin = style.text_margin
-                            spacing = (screen_height - 2 * margin) // (len(scene['text']) + 1)
-                            
-                            for j, text in enumerate(scene['text']):
+                        for j, text in enumerate(text_elements):
+                            if not text.strip():
+                                continue
+                                
+                            try:
+                                # Calculate vertical position
+                                y_pos = style.text_margin + (j * (style.font_size + 10))
+                                
+                                # Create text clip
+                                text_clip = TextClip(
+                                    text,
+                                    fontsize=style.font_size,
+                                    color=style.text_color,
+                                    font=style.font,
+                                    size=style.resolution,
+                                    method='caption',
+                                    align='center'
+                                )
+                                text_clip = text_clip.set_duration(duration)
+                                text_clip = text_clip.set_position(('center', y_pos))
+                                
+                                clips.append(text_clip)
+                                print(f"  Added text clip {j+1}")
+                            except Exception as e:
+                                print(f"  Error creating text clip {j+1}: {str(e)}")
+                                # Try alternative method with PIL if TextClip fails
                                 try:
-                                    # Directly use TextClip with preset font
-                                    text_clip = TextClip(
-                                        text, 
-                                        fontsize=style.font_size,
-                                        color=style.text_color,
-                                        bg_color=None,
-                                        font='Arial',
-                                        method='pango'  # Try pango method (should work without ImageMagick)
-                                    )
-                                    
-                                    # Position text and set duration
-                                    y_pos = margin + spacing * (j + 1)
-                                    text_clip = text_clip.set_position(('center', y_pos))
-                                    text_clip = text_clip.set_duration(duration)
-                                    
-                                    clips.append(text_clip)
-                                    print(f"  Added text clip {j+1}")
+                                    text_array = self.create_text_image(text, style)
+                                    pil_text_clip = ImageClip(text_array)
+                                    pil_text_clip = pil_text_clip.set_duration(duration)
+                                    pil_text_clip = pil_text_clip.set_position(('center', y_pos))
+                                    clips.append(pil_text_clip)
+                                    print(f"  Added text clip {j+1} using PIL alternative")
+                                except Exception as e2:
+                                    print(f"  Error with PIL alternative: {str(e2)}")
+                        
+                        # Add audio for this scene if available
+                        scene_audio = None
+                        if isinstance(audio_files, list) and i < len(audio_files):
+                            audio_path = audio_files[i]
+                            if audio_path and os.path.exists(audio_path):
+                                try:
+                                    scene_audio = AudioFileClip(audio_path)
                                 except Exception as e:
-                                    print(f"  Error creating text clip {j+1}: {str(e)}")
-                                    # Try alternative method with PIL if TextClip fails
-                                    try:
-                                        text_array = self.create_text_image(text, style)
-                                        pil_text_clip = ImageClip(text_array)
-                                        pil_text_clip = pil_text_clip.set_duration(duration)
-                                        pil_text_clip = pil_text_clip.set_position(('center', y_pos))
-                                        clips.append(pil_text_clip)
-                                        print(f"  Added text clip {j+1} using PIL alternative")
-                                    except Exception as e2:
-                                        print(f"  Error with PIL alternative: {str(e2)}")
+                                    print(f"  Error loading scene audio: {str(e)}")
                         
                         # Composite all clips
                         scene_clip = CompositeVideoClip(clips, size=style.resolution)
                         scene_clip = scene_clip.set_duration(duration)
+                        
+                        # Add audio to scene if available
+                        if scene_audio:
+                            scene_clip = scene_clip.set_audio(scene_audio)
                         
                         scene_clips.append(scene_clip)
                         print(f"  Scene {i+1} processed successfully")
@@ -226,43 +238,39 @@ class VideoProcessor:
                         
                 except Exception as e:
                     print(f"  Error processing scene {i+1}: {str(e)}")
-            
+        
             # Final check before compositing
-            if not scene_clips or len(scene_clips) == 0:
+            if not scene_clips:
                 print("Error: No valid scene clips generated")
                 return None
-            
+        
             print(f"\nCombining {len(scene_clips)} clips into final video")
             final_video = concatenate_videoclips(scene_clips)
             
-            # Add audio if provided
-            if audio_file and os.path.exists(audio_file):
+            # Add global audio if provided as single file
+            if isinstance(audio_files, str) and os.path.exists(audio_files):
                 try:
-                    audio = AudioFileClip(audio_file)
+                    audio = AudioFileClip(audio_files)
                     final_video = final_video.set_audio(audio)
-                    print("Added audio to video")
+                    print("Added global audio to video")
                 except Exception as e:
-                    print(f"Error adding audio: {str(e)}")
-            
+                    print(f"Error adding global audio: {str(e)}")
+        
             # Generate unique output filename
             timestamp = int(time.time())
             output_file = os.path.join(self.output_dir, f"video_{style_name}_{timestamp}.mp4")
-            
+        
             # Write video file
-            print(f"Writing video to {output_file}")
             final_video.write_videofile(
                 output_file,
                 fps=style.fps,
                 codec='libx264',
-                audio_codec='aac' if audio_file else None,
-                verbose=False
+                audio_codec='aac'
             )
-            
-            print("Video completed successfully")
+        
+            print(f"\nVideo saved to: {output_file}")
             return output_file
             
         except Exception as e:
-            import traceback
             print(f"Error processing video: {str(e)}")
-            traceback.print_exc()
             return None

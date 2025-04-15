@@ -92,13 +92,12 @@ tts:
 
 # Voice Settings
 voice:
-  backend: elevenlabs  # or local
+  provider: "local"  # Options: elevenlabs, local
   elevenlabs:
-    voice_id: YOUR_VOICE_ID
-    api_key: YOUR_API_KEY
+    voice_id: ""  # Set your ElevenLabs voice ID here
+    api_key: ""   # Set your ElevenLabs API key here or use environment variable
   local:
     voice_name: "Default"
-  provider: "elevenlabs"  # Options: elevenlabs, local, placeholder
   tone_preferences: 
     - serious
     - funny
