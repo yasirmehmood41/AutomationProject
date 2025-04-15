@@ -1,162 +1,86 @@
-"""Main script for video generation."""
+"""Main script for video generation system."""
 import os
+from pathlib import Path
+import yaml
 from typing import Dict, List, Optional
-import json
 from Content_Engine.api_generator import ScriptGenerator
+from Content_Engine.scene_generator import generate_scene_metadata
 from Media_Handler.voice_system import VoiceSystem
 from Media_Handler.video_processor import VideoProcessor
+import logging
 
-def parse_manual_script(script_text: str) -> List[Dict]:
-    """Parse manually entered script into scenes."""
-    scenes = []
-    current_scene = None
-    
-    # Split script into lines
-    lines = script_text.strip().split('\n')
-    collecting_voiceover = False
-    current_voiceover = []
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            if collecting_voiceover and current_voiceover:
-                if current_scene:
-                    current_scene['voiceover'] = '\n'.join(current_voiceover)
-                collecting_voiceover = False
-                current_voiceover = []
-            continue
-            
-        # Check for scene markers
-        if line.startswith('[') and ']' in line:
-            # Save previous scene if exists
-            if current_scene:
-                if collecting_voiceover and current_voiceover:
-                    current_scene['voiceover'] = '\n'.join(current_voiceover)
-                scenes.append(current_scene)
-            
-            # Start new scene
-            scene_name = line[1:line.find(']')]
-            timing = ""
-            if '–' in line or '-' in line:
-                timing = line.split('–')[-1].split('-')[-1].strip()
-            
-            current_scene = {
-                'name': scene_name,
-                'timing': timing,
-                'visuals': [],
-                'voiceover': '',
-                'text': [],
-                'background': '',
-                'transitions': []
-            }
-            collecting_voiceover = False
-            current_voiceover = []
-            continue
-        
-        # Parse scene content
-        if current_scene:
-            if line.lower().startswith('visual:'):
-                current_scene['visuals'].append(line.split(':', 1)[1].strip())
-                collecting_voiceover = False
-            elif line.lower().startswith('voice-over:') or line.lower().startswith('voice-over/text on screen:'):
-                collecting_voiceover = True
-                text = line.split(':', 1)[1].strip().strip('"')
-                if text:  # Only add if there's actual text after the colon
-                    current_voiceover.append(text)
-                if line.lower().startswith('voice-over/text on screen:'):
-                    current_scene['text'].append(text)
-            elif collecting_voiceover and line.startswith('"') and line.endswith('"'):
-                # Add to current voice-over
-                current_voiceover.append(line.strip('"'))
-            elif line.lower().startswith('on-screen text:'):
-                collecting_voiceover = False
-                text_items = line.split(':', 1)[1].strip().strip('"').split('|')
-                current_scene['text'].extend([t.strip().strip('"') for t in text_items])
-            elif line.lower().startswith('bullet points on-screen:'):
-                collecting_voiceover = False
-                # Don't add the "Bullet points On-screen:" line itself
-                continue
-            elif line.startswith('"') and line.endswith('"'):
-                # Additional text items
-                current_scene['text'].append(line.strip('"'))
-            elif line.lower().startswith('background music:'):
-                collecting_voiceover = False
-                current_scene['background'] = line.split(':', 1)[1].strip()
-    
-    # Add last scene
-    if current_scene:
-        if collecting_voiceover and current_voiceover:
-            current_scene['voiceover'] = '\n'.join(current_voiceover)
-        scenes.append(current_scene)
-    
-    return scenes
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def preview_script(scenes: List[Dict]) -> bool:
-    """Show script preview and get user confirmation."""
+def load_config(config_path: str = "config.yaml") -> Dict:
+    """Load configuration from YAML file."""
+    try:
+        with open(config_path, 'r') as file:
+            return yaml.safe_load(file)
+    except Exception as e:
+        print(f"Error loading config: {e}")
+        return {}
+
+def preview_script(script_text: str) -> bool:
+    """Preview the script and get user confirmation."""
     print("\n=== Script Preview ===")
-    print(f"Format: Professional Video Script")
-    print(f"Total Scenes: {len(scenes)}")
-    
-    # Calculate estimated duration
-    total_duration = 0
-    for scene in scenes:
-        if scene['timing']:
-            try:
-                # Parse timing like "0:06 to 0:20"
-                start, end = scene['timing'].split('to')
-                start_mins, start_secs = map(int, start.strip().split(':'))
-                end_mins, end_secs = map(int, end.strip().split(':'))
-                duration = (end_mins * 60 + end_secs) - (start_mins * 60 + start_secs)
-                total_duration += duration
-            except:
-                # If timing can't be parsed, estimate based on content
-                duration = len(scene['voiceover'].split()) / 2  # Assume 2 words per second
-                total_duration += duration
-    
-    print(f"Estimated Duration: {total_duration}s\n")
-    print("Scenes:\n")
-    
-    for i, scene in enumerate(scenes, 1):
-        print(f"Scene {i}: [{scene['name']}]")
-        if scene['timing']:
-            print(f"Duration: {scene['timing']}")
-        if scene['voiceover']:
-            print(f"Words: {len(scene['voiceover'].split())}")
-        print("-" * 40)
-        if scene['voiceover']:
-            print(scene['voiceover'])
-        if scene['text']:
-            print("\nOn-screen text:")
-            for text in scene['text']:
-                print(f"- {text}")
-        print("\n")
+    print(script_text)
     
     while True:
-        choice = input("Proceed with this script? (y/n): ").lower()
+        choice = input("\nApprove script? (y/n): ").lower()
         if choice in ['y', 'n']:
             return choice == 'y'
         print("Please enter 'y' or 'n'")
 
-def select_voice() -> str:
-    """Select voice for the video."""
-    voice_system = VoiceSystem()
-    voices = voice_system.list_available_voices()
-    
-    print("\n=== Voice Selection ===")
-    for i, (voice_id, voice) in enumerate(voices.items(), 1):
-        print(f"{i}. {voice.name}")
-        print(f"   Language: {voice.language}")
-        print(f"   Gender: {voice.gender}")
-        print(f"   Engine: {voice.engine}\n")
+def select_niche(script_generator: ScriptGenerator) -> str:
+    """Select content niche."""
+    niches = script_generator.get_available_niches()
+    print("\n=== Content Niche Selection ===")
+    for i, niche in enumerate(niches, 1):
+        print(f"{i}. {niche.title()}")
     
     while True:
         try:
-            choice = int(input(f"Select voice (1-{len(voices)}): "))
-            if 1 <= choice <= len(voices):
-                return list(voices.keys())[choice - 1]
+            choice = int(input(f"\nSelect niche (1-{len(niches)}): "))
+            if 1 <= choice <= len(niches):
+                selected_niche = niches[choice - 1]
+                if script_generator.switch_niche(selected_niche):
+                    return selected_niche
         except ValueError:
             pass
-        print(f"Please enter a number between 1 and {len(voices)}")
+        print(f"Please enter a number between 1 and {len(niches)}")
+
+def select_voice(voice_system: VoiceSystem) -> str:
+    """Select voice for the video."""
+    voices = voice_system.list_available_voices()
+    print("\n=== Voice Selection ===")
+    
+    # Group voices by provider
+    voices_by_provider = {}
+    for voice_id, voice in voices.items():
+        provider = voice.engine
+        if provider not in voices_by_provider:
+            voices_by_provider[provider] = []
+        voices_by_provider[provider].append((voice_id, voice))
+    
+    # Display voices grouped by provider
+    voice_options = []
+    for provider, provider_voices in voices_by_provider.items():
+        print(f"\n{provider.upper()} Voices:")
+        for voice_id, voice in provider_voices:
+            idx = len(voice_options) + 1
+            print(f"{idx}. {voice.name} ({voice.gender}, {voice.language})")
+            voice_options.append(voice_id)
+    
+    while True:
+        try:
+            choice = int(input(f"\nSelect voice (1-{len(voice_options)}): "))
+            if 1 <= choice <= len(voice_options):
+                return voice_options[choice - 1]
+        except ValueError:
+            pass
+        print(f"Please enter a number between 1 and {len(voice_options)}")
 
 def select_style() -> str:
     """Select video style."""
@@ -184,23 +108,92 @@ def select_style() -> str:
 
 def main():
     """Main function."""
+    try:
+        # Load configuration
+        config = load_config()
+        
+        # Initialize components
+        script_generator = ScriptGenerator()
+        voice_system = VoiceSystem()
+        video_processor = VideoProcessor()
+        
+        print("\n=== Video Generation System ===")
+        
+        # Select content niche
+        selected_niche = select_niche(script_generator)
+        print(f"\nSelected niche: {selected_niche.title()}")
+        
+        # Get script content
+        script_text = get_script_content(script_generator)
+        if not script_text:
+            print("\nScript generation cancelled.")
+            return
+            
+        # Preview and confirm script
+        if not preview_script(script_text):
+            print("\nScript generation cancelled.")
+            return
+            
+        # Generate scene metadata
+        logger.info("Generating scene metadata...")
+        scenes = generate_scene_metadata(script_text)
+        
+        # Validate scene metadata
+        if not scenes:
+            error_msg = "Script content could not be split into scenes. Please check the template or enter a valid script."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        logger.info(f"Generated metadata for {len(scenes)} scenes")
+        
+        # Select voice
+        voice_id = select_voice(voice_system)
+        if not voice_id:
+            print("\nVoice selection cancelled.")
+            return
+        
+        # Generate voice-overs for each scene
+        print("\nGenerating voice-overs...")
+        try:
+            audio_files = voice_system.generate_voice_for_scenes(scenes, voice_id)
+            print(f"Generated {len(audio_files)} audio files")
+        except Exception as e:
+            logger.error(f"Error generating voice-overs: {e}")
+            return
+        
+        # Select video style
+        style = select_style()
+        if not style:
+            print("\nStyle selection cancelled.")
+            return
+        
+        # Process video with scene metadata
+        print("\nProcessing video...")
+        try:
+            output_file = video_processor.process_video(scenes, audio_files, style)
+            print(f"\nVideo generated successfully: {output_file}")
+        except Exception as e:
+            logger.error(f"Error processing video: {e}")
+            return
+
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        return
+
+def get_script_content(script_generator: ScriptGenerator) -> Optional[str]:
+    """Get script content either from template or manual input."""
     print("\n=== Script Generation ===")
     print("1. Generate from template")
-    print("2. Manual input\n")
+    print("2. Manual input")
     
     while True:
         try:
-            choice = int(input("Select option (1-2): "))
+            choice = int(input("\nSelect option (1-2): "))
             if choice in [1, 2]:
                 break
         except ValueError:
             pass
         print("Please enter 1 or 2")
-    
-    # Initialize components
-    script_generator = ScriptGenerator()
-    voice_system = VoiceSystem()
-    video_processor = VideoProcessor()
     
     if choice == 1:
         # Template-based generation
@@ -208,11 +201,13 @@ def main():
         print("\nAvailable templates:")
         for i, template in enumerate(templates, 1):
             print(f"\n{i}. {template['name']}")
-            print(f"   {template['description']}\n")
+            print(f"   Description: {template['description']}")
+            print(f"   Style: {template['style']}")
+            print(f"   Version: {template['version']}")
         
         while True:
             try:
-                template_choice = int(input(f"Select template (1-{len(templates)}): "))
+                template_choice = int(input(f"\nSelect template (1-{len(templates)}): "))
                 if 1 <= template_choice <= len(templates):
                     break
             except ValueError:
@@ -223,15 +218,32 @@ def main():
         print(f"\n=== {template['name']} Template ===")
         print(f"{template['description']}\n")
         
+        # Get template fields
+        fields = script_generator.get_template_fields(template['id'])
+        
         print("Required information:")
         context = {}
-        for field in template['fields']:
-            value = input(f"{field['name']}: ").strip()
-            context[field['id']] = value
+        for field in fields:
+            if field['default']:
+                value = input(f"{field['name']} [{field['default']}]: ").strip()
+                if not value:
+                    value = field['default']
+            else:
+                while True:
+                    value = input(f"{field['name']}: ").strip()
+                    if value or not field['required']:
+                        break
+                    print(f"{field['name']} is required")
+            
+            if value:
+                context[field['id']] = value
         
         # Generate script
-        script_text = script_generator.generate_script(template['id'], context)
-        scenes = parse_manual_script(script_text)
+        try:
+            return script_generator.generate_script(template['id'], context)
+        except ValueError as e:
+            logger.error(f"Error generating script: {e}")
+            return None
         
     else:
         # Manual input
@@ -247,60 +259,7 @@ def main():
                 break
             lines.append(line)
         
-        script_text = "\n".join(lines)
-        scenes = parse_manual_script(script_text)
-    
-    # Preview and confirm
-    if not scenes:
-        print("No valid scenes found in script.")
-        return
-    
-    if not preview_script(scenes):
-        print("Script generation cancelled.")
-        return
-    
-    # Select voice
-    voice_id = select_voice()
-    
-    # Select style
-    style_name = select_style()
-    
-    # Generate video
-    print("\nGenerating video...")
-    try:
-        # Make sure there's text in every scene
-        for i, scene in enumerate(scenes):
-            if not scene.get('text'):
-                # If no specific text is set, use voiceover as text
-                if scene.get('voiceover'):
-                    scenes[i]['text'] = [scene['voiceover']]
-                else:
-                    # Default text if nothing else is available
-                    scenes[i]['text'] = [f"Scene {i+1}: {scene.get('name', 'Untitled')}"]
-            
-            # Ensure timing is properly formatted
-            if not scene.get('timing') or 'to' not in scene.get('timing', ''):
-                # Calculate a default timing if none exists
-                start_time = i * 5  # 5 seconds per scene as default
-                end_time = start_time + 5
-                scenes[i]['timing'] = f"{start_time} to {end_time}"
-        
-        # Generate voice audio (optional for now)
-        # audio_file = voice_system.generate_voice_for_scenes(scenes, voice_id)
-        audio_file = ""  # Temporarily skip audio to focus on video
-        
-        # Process video with better error handling
-        output_file = video_processor.process_video(scenes, audio_file, style_name)
-        
-        if output_file:
-            print(f"\nVideo generated successfully: {output_file}")
-        else:
-            print("\nVideo generation failed.")
-        
-    except Exception as e:
-        import traceback
-        print(f"Error generating video: {str(e)}")
-        traceback.print_exc()
+        return "\n".join(lines)
 
 if __name__ == "__main__":
     main()
