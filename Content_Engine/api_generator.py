@@ -2,87 +2,181 @@
 import os
 import json
 import yaml
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 from dataclasses import dataclass
 import openai
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
+from pathlib import Path
 
 @dataclass
 class ScriptTemplate:
+    """Template for script generation."""
     id: str
     name: str
     description: str
     style: str
     fields: List[Dict]
     prompt_template: str
-    example: str
+    example: str = ""
+    niche: str = "general"
+    version: str = "1.0"
+
+class TemplateManager:
+    """Manages loading and validation of templates."""
+    
+    def __init__(self, templates_dir: str = "templates"):
+        self.templates_dir = Path(templates_dir)
+        if not self.templates_dir.exists():
+            raise FileNotFoundError(f"Templates directory not found: {templates_dir}")
+
+    def get_template_path(self, niche: str) -> Optional[Path]:
+        """Get the template file path for a given niche."""
+        yaml_path = self.templates_dir / f"{niche}_script.yaml"
+        json_path = self.templates_dir / f"{niche}_script.json"
+        
+        if yaml_path.exists():
+            return yaml_path
+        elif json_path.exists():
+            return json_path
+        return None
+
+    def list_available_niches(self) -> List[str]:
+        """List all available niche templates."""
+        niches = []
+        for file in self.templates_dir.glob("*_script.*"):
+            if file.suffix in ['.json', '.yaml']:
+                niche = file.stem.replace('_script', '')
+                niches.append(niche)
+        return sorted(list(set(niches)))
+
+    def load_templates(self, niche: str) -> Dict[str, ScriptTemplate]:
+        """Load templates for a specific niche."""
+        template_path = self.get_template_path(niche)
+        if not template_path:
+            raise FileNotFoundError(f"No template file found for niche: {niche}")
+            
+        if template_path.suffix == '.json':
+            return self._load_json_templates(template_path)
+        else:
+            return self._load_yaml_templates(template_path)
+
+    def _load_json_templates(self, path: Path) -> Dict[str, ScriptTemplate]:
+        """Load templates from a JSON file."""
+        try:
+            with path.open('r') as file:
+                templates_data = json.load(file)
+                return self._process_templates(templates_data, path.stem.replace('_script', ''))
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error decoding JSON from {path}: {e}")
+
+    def _load_yaml_templates(self, path: Path) -> Dict[str, ScriptTemplate]:
+        """Load templates from a YAML file."""
+        try:
+            with path.open('r') as file:
+                templates_data = yaml.safe_load(file)
+                return self._process_templates(templates_data, path.stem.replace('_script', ''))
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error decoding YAML from {path}: {e}")
+
+    def _process_templates(self, data: Dict, niche: str) -> Dict[str, ScriptTemplate]:
+        """Process and validate template data."""
+        templates = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                # Ensure required fields are present
+                required_fields = ['name', 'description', 'style', 'fields', 'prompt_template']
+                missing_fields = [f for f in required_fields if f not in value]
+                if missing_fields:
+                    raise ValueError(f"Template '{key}' missing required fields: {missing_fields}")
+                
+                # Add template metadata
+                value['id'] = key
+                value['niche'] = niche
+                templates[key] = ScriptTemplate(**value)
+            else:
+                # Handle flat template structure (like in tech_script.yaml)
+                templates[key] = ScriptTemplate(
+                    id=key,
+                    name=key.title(),
+                    description=f"{key.title()} template for {niche} niche",
+                    style="default",
+                    fields=[],
+                    prompt_template=str(value),
+                    niche=niche
+                )
+        return templates
 
 class ScriptGenerator:
-    def __init__(self, config_path="config.yaml"):
+    """Generates scripts using templates and AI."""
+    
+    def __init__(self, config_path: str = "config.yaml"):
+        """Initialize the script generator."""
         self.api_key = os.getenv("OPENAI_API_KEY")
         if self.api_key:
             openai.api_key = self.api_key
 
-        # Load config
+        # Load configuration
         self.config = self._load_config(config_path)
         self.niche = self.config.get('project', {}).get('default_niche', 'tech')
         
-        # Load templates based on niche
-        self.templates = self.load_templates_for_niche(self.niche)
+        # Initialize template manager
+        self.template_manager = TemplateManager()
+        self.templates = self.template_manager.load_templates(self.niche)
+        
+        # Cache available niches
+        self.available_niches = self.template_manager.list_available_niches()
 
     def _load_config(self, config_path: str) -> Dict:
         """Load configuration from YAML file."""
         try:
             with open(config_path, 'r') as file:
-                return yaml.safe_load(file)
+                config = yaml.safe_load(file)
+                if 'project' not in config:
+                    raise ValueError("Missing 'project' section in config")
+                return config
         except Exception as e:
             raise ValueError(f"Error loading config file: {e}")
 
-    def load_templates_for_niche(self, niche: str) -> Dict[str, ScriptTemplate]:
-        """Load templates based on niche from either JSON or YAML file."""
-        # Try JSON first
-        json_path = f"templates/{niche}_script.json"
-        yaml_path = f"templates/{niche}_script.yaml"
-        
-        if os.path.exists(json_path):
-            return self._load_json_templates(json_path)
-        elif os.path.exists(yaml_path):
-            return self._load_yaml_templates(yaml_path)
+    def get_available_templates(self, niche: Optional[str] = None) -> List[Dict]:
+        """Get list of available templates for a specific niche or current niche."""
+        if niche and niche != self.niche:
+            try:
+                templates = self.template_manager.load_templates(niche)
+            except FileNotFoundError:
+                return []
         else:
-            raise FileNotFoundError(f"No template file found for niche '{niche}' in either JSON or YAML format")
+            templates = self.templates
 
-    def _load_json_templates(self, path: str) -> Dict[str, ScriptTemplate]:
-        """Load templates from a JSON file."""
-        try:
-            with open(path, "r") as file:
-                templates_data = json.load(file)
-                return {key: ScriptTemplate(**value) for key, value in templates_data.items()}
-        except json.JSONDecodeError:
-            raise ValueError(f"Error decoding JSON from file: {path}")
-
-    def _load_yaml_templates(self, path: str) -> Dict[str, ScriptTemplate]:
-        """Load templates from a YAML file."""
-        try:
-            with open(path, "r") as file:
-                templates_data = yaml.safe_load(file)
-                return {key: ScriptTemplate(**value) for key, value in templates_data.items()}
-        except yaml.YAMLError:
-            raise ValueError(f"Error decoding YAML from file: {path}")
-
-    def get_available_templates(self) -> List[Dict]:
-        """Get list of available templates."""
         return [
             {
                 "id": t.id,
                 "name": t.name,
                 "description": t.description,
                 "style": t.style,
-                "fields": t.fields
+                "fields": t.fields,
+                "niche": t.niche,
+                "version": t.version
             }
-            for t in self.templates.values()
+            for t in templates.values()
         ]
+
+    def get_available_niches(self) -> List[str]:
+        """Get list of all available niches."""
+        return self.available_niches
+
+    def switch_niche(self, niche: str) -> bool:
+        """Switch to a different niche template set."""
+        if niche not in self.available_niches:
+            return False
+        
+        try:
+            self.templates = self.template_manager.load_templates(niche)
+            self.niche = niche
+            return True
+        except Exception:
+            return False
 
     def generate_script(self, template_id: str, context: Dict) -> str:
         """Generate script using specified template and context."""

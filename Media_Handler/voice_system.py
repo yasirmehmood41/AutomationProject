@@ -1,7 +1,7 @@
 """Voice generation system with local and cloud TTS support."""
 import os
 import tempfile
-from typing import Dict, List
+from typing import Dict, List, Type
 from dataclasses import dataclass
 import pyttsx3
 import requests
@@ -10,6 +10,7 @@ import hashlib
 import re
 from abc import ABC, abstractmethod
 import yaml
+from pathlib import Path
 
 @dataclass
 class VoiceConfig:
@@ -31,6 +32,21 @@ class VoiceBackend(ABC):
     def list_voices(self) -> Dict[str, VoiceConfig]:
         """List available voices for this backend."""
         pass
+
+    @classmethod
+    def create(cls, provider: str, config: Dict) -> 'VoiceBackend':
+        """Factory method to create voice backend instance."""
+        backends = {
+            'elevenlabs': ElevenLabsVoiceBackend,
+            'local': LocalTTSVoiceBackend,
+            # Add more backends here as needed
+        }
+        
+        backend_class = backends.get(provider.lower())
+        if not backend_class:
+            raise ValueError(f"Unsupported voice provider: {provider}")
+        
+        return backend_class(config)
 
 class ElevenLabsVoiceBackend(VoiceBackend):
     def __init__(self, config: Dict):
@@ -90,12 +106,11 @@ class ElevenLabsVoiceBackend(VoiceBackend):
         if response.status_code != 200:
             raise Exception(f"ElevenLabs API error: {response.text}")
 
-        # Create output directory if it doesn't exist
-        os.makedirs("output_manager/audio", exist_ok=True)
+        output_dir = Path(self.config.get('project', {}).get('output_dir', './output/audio'))
+        output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Save the audio file
         text_hash = hashlib.md5(text.encode()).hexdigest()[:10]
-        output_file = os.path.join("output_manager", "audio", f"{voice_id}_{text_hash}.mp3")
+        output_file = os.path.join(output_dir, f"{voice_id}_{text_hash}.mp3")
         with open(output_file, 'wb') as f:
             f.write(response.content)
         return output_file
@@ -105,7 +120,6 @@ class LocalTTSVoiceBackend(VoiceBackend):
         self.engine = pyttsx3.init()
         self.voices = self._load_voices()
         
-        # Configure voice settings from config
         voice_name = config.get('voice_name', 'Default')
         for voice in self.engine.getProperty('voices'):
             if voice_name.lower() in voice.name.lower():
@@ -140,21 +154,19 @@ class LocalTTSVoiceBackend(VoiceBackend):
         if voice_id not in self.voices:
             raise ValueError(f"Unknown voice: {voice_id}")
 
-        # Create output directories if they don't exist
-        os.makedirs("output_manager/audio", exist_ok=True)
-        os.makedirs("output_manager/temp", exist_ok=True)
+        output_dir = Path(self.config.get('project', {}).get('output_dir', './output/audio'))
+        output_dir.mkdir(parents=True, exist_ok=True)
+        temp_dir = Path(self.config.get('project', {}).get('temp_dir', './output/temp'))
+        temp_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate unique filename
         text_hash = hashlib.md5(text.encode()).hexdigest()[:10]
-        temp_wav = os.path.join("output_manager", "temp", f"{voice_id}_{text_hash}.wav")
-        output_file = os.path.join("output_manager", "audio", f"{voice_id}_{text_hash}.mp3")
+        temp_wav = os.path.join(temp_dir, f"{voice_id}_{text_hash}.wav")
+        output_file = os.path.join(output_dir, f"{voice_id}_{text_hash}.mp3")
 
         try:
-            # Save to WAV first
             self.engine.save_to_file(text, temp_wav)
             self.engine.runAndWait()
 
-            # Convert WAV to MP3
             if os.path.exists(temp_wav):
                 audio = AudioSegment.from_wav(temp_wav)
                 audio.export(output_file, format="mp3")
@@ -168,88 +180,77 @@ class LocalTTSVoiceBackend(VoiceBackend):
 
 class VoiceSystem:
     """Voice generation system with dynamic backend loading."""
+    
     def __init__(self, config_path: str = "config.yaml"):
+        """Initialize voice system with configuration."""
         self.config = self._load_config(config_path)
         self.backend = self._initialize_backend()
+        self.output_dir = self._ensure_output_dir()
 
     def _load_config(self, config_path: str) -> Dict:
         """Load configuration from YAML file."""
         try:
-            with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+            with open(config_path, 'r') as file:
+                config = yaml.safe_load(file)
+                if 'voice' not in config:
+                    raise ValueError("Missing 'voice' section in config")
+                return config
         except Exception as e:
-            raise Exception(f"Error loading config: {str(e)}")
+            raise ValueError(f"Error loading config file: {e}")
 
     def _initialize_backend(self) -> VoiceBackend:
         """Initialize the appropriate voice backend based on config."""
         voice_config = self.config.get('voice', {})
-        backend_name = voice_config.get('backend', 'local')
+        provider = voice_config.get('provider', 'local')
+        
+        try:
+            provider_config = voice_config.get(provider, {})
+            return VoiceBackend.create(provider, provider_config)
+        except Exception as e:
+            raise ValueError(f"Failed to initialize voice backend '{provider}': {e}")
 
-        if backend_name == 'elevenlabs':
-            return ElevenLabsVoiceBackend(voice_config.get('elevenlabs', {}))
-        elif backend_name == 'local':
-            return LocalTTSVoiceBackend(voice_config.get('local', {}))
-        else:
-            raise ValueError(f"Unknown voice backend: {backend_name}")
+    def _ensure_output_dir(self) -> str:
+        """Ensure output directory exists and return its path."""
+        output_dir = Path(self.config.get('project', {}).get('output_dir', './output/audio'))
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return str(output_dir)
 
     def list_available_voices(self) -> Dict[str, VoiceConfig]:
         """List available voices from the current backend."""
         return self.backend.list_voices()
 
-    def generate_voice_for_scenes(self, scenes: List[Dict], voice_id: str) -> str:
+    def generate_voice_for_scenes(self, scenes: List[Dict], voice_id: str) -> List[str]:
         """Generate voice audio for multiple scenes using the current backend."""
-        if not scenes:
-            raise ValueError("No scenes provided")
-
-        scene_files = []
-        for scene in scenes:
-            if scene.get('voiceover'):
-                try:
-                    scene_file = self.backend.generate_voice(scene['voiceover'], voice_id)
-                    if os.path.exists(scene_file):
-                        scene_files.append(scene_file)
-                except Exception as e:
-                    print(f"Error generating voice for scene: {str(e)}")
-                    continue
-
-        if not scene_files:
-            raise Exception("No audio files were generated")
-
-        # If only one file, return it directly
-        if len(scene_files) == 1:
-            return scene_files[0]
-
-        # Combine multiple files
+        audio_files = []
         try:
-            combined = AudioSegment.from_mp3(scene_files[0])
-            for file in scene_files[1:]:
-                combined += AudioSegment.from_mp3(file)
-
-            output_file = os.path.join("output_manager", "audio", f"combined_{hashlib.md5(str(scenes).encode()).hexdigest()[:10]}.mp3")
-            combined.export(output_file, format="mp3")
-            return output_file
+            for scene in scenes:
+                if 'text' not in scene:
+                    continue
+                
+                audio_path = self.backend.generate_voice(scene['text'], voice_id)
+                if audio_path:
+                    audio_files.append(audio_path)
+            
+            return audio_files
         except Exception as e:
-            print(f"Error combining audio: {str(e)}")
-            return scene_files[0]  # Return first scene audio as fallback
+            raise RuntimeError(f"Error generating voice audio: {e}")
 
 if __name__ == "__main__":
-    # Example usage
-    voice_system = VoiceSystem()
-    
-    # List available voices
-    voices = voice_system.list_available_voices()
-    print("\nAvailable voices:")
-    for voice_id, config in voices.items():
-        print(f"- {config.name} ({config.gender}, {config.language}, {config.engine})")
-
-    # Generate voice for scenes
-    scenes = [
-        {'voiceover': 'Welcome to our demo!'},
-        {'voiceover': 'This is an example of multi-scene voice generation.'}
-    ]
-    
     try:
-        output_file = voice_system.generate_voice_for_scenes(scenes, next(iter(voices.keys())))
-        print(f"\nGenerated audio file: {output_file}")
+        voice_system = VoiceSystem()
+        voices = voice_system.list_available_voices()
+        print("Available voices:")
+        for voice_id, voice in voices.items():
+            print(f"- {voice.name} ({voice_id})")
+            
+        scenes = [
+            {"text": "Welcome to our video! Today we'll be discussing an interesting topic."},
+            {"text": "Thanks for watching! Don't forget to like and subscribe."}
+        ]
+        
+        if voices:
+            first_voice_id = next(iter(voices.keys()))
+            audio_files = voice_system.generate_voice_for_scenes(scenes, first_voice_id)
+            print(f"Generated {len(audio_files)} audio files: {audio_files}")
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error: {e}")
