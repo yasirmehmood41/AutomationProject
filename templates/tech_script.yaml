@@ -1,7 +1,58 @@
-# Example: templates/tech_script.yaml
-intro: "Welcome to today's episode on {topic}!"
-body_template: |
-  Here's what you need to know about {topic}:
-  - Point 1: {point1}
-  - Point 2: {point2}
-outro: "Thanks for watching. Don’t forget to subscribe!"
+intro:
+  id: intro
+  name: Intro
+  description: "Opening line for the tech video."
+  style: "default"
+  prompt_template: "Welcome to today's episode on {topic}!"
+  fields: 
+    - id: topic
+      name: Topic
+      description: "Main topic of the video"
+      required: true
+      default: ""
+  example: "Welcome to today's episode on AI!"
+  niche: "tech"
+  version: "1.0"
+
+body_template:
+  id: body_template
+  name: Body
+  description: "Main content section for the tech video."
+  style: "default"
+  prompt_template: |
+    Here's what you need to know about {topic}:
+    - Point 1: {point1}
+    - Point 2: {point2}
+  fields:
+    - id: topic
+      name: Topic
+      description: "Main topic"
+      required: true
+      default: ""
+    - id: point1
+      name: Point 1
+      description: "First point"
+      required: true
+      default: ""
+    - id: point2
+      name: Point 2
+      description: "Second point"
+      required: true
+      default: ""
+  example: |
+    Here's what you need to know about AI:
+    - Point 1: It's everywhere
+    - Point 2: It's evolving fast
+  niche: "tech"
+  version: "1.0"
+
+outro:
+  id: outro
+  name: Outro
+  description: "Closing line for the tech video."
+  style: "default"
+  prompt_template: "Thanks for watching. Don’t forget to subscribe!"
+  fields: []
+  example: "Thanks for watching. Don’t forget to subscribe!"
+  niche: "tech"
+  version: "1.0"

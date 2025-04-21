@@ -22,6 +22,11 @@ logging.basicConfig(level=logging.INFO,
 
 
 class MediaFetcher:
+    """
+    MediaFetcher handles retrieval of images and videos from APIs and local sources.
+    
+    TODO: Add retry logic, error handling for all API calls, and support for additional media APIs (e.g., Getty, Shutterstock).
+    """
     def __init__(self, config=None):
         self.config = config if config else load_config()
         self.temp_dir = self.config['project']['temp_dir']
@@ -273,3 +278,5 @@ class MediaFetcher:
         keywords = [word for word, count in sorted_words[:5]]
 
         return keywords
+
+# TODO: Add unit and integration tests for all media fetcher methods.

@@ -8,6 +8,10 @@ from utils.config_loader import load_config
 def export_video(video_file: str) -> str:
     """
     Finalizes the video export by applying quality presets and renaming the final output.
+    Args:
+        video_file: Path to the processed video file.
+    Returns:
+        Path to the finalized output video file.
     """
     try:
         # Create output directory if it doesn't exist
@@ -35,8 +39,14 @@ def export_video(video_file: str) -> str:
         return video_file
 
 
-def check_video_quality(video_file):
-    """Check the quality of the exported video."""
+def check_video_quality(video_file: str) -> bool:
+    """
+    Check the quality of the exported video.
+    Args:
+        video_file: Path to the video file.
+    Returns:
+        True if quality is acceptable, False otherwise.
+    """
     try:
         # Basic file existence check
         if not os.path.exists(video_file):
@@ -55,6 +65,8 @@ def check_video_quality(video_file):
         logging.error(f"Error checking video quality: {str(e)}")
         return False
 
+
+# TODO: Add support for multiple output formats, video compression, and user-defined quality settings.
 
 if __name__ == "__main__":
     dummy_video = "./Output_Manager/outputs/processed_video.mp4"

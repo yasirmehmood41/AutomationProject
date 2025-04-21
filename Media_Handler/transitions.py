@@ -1,11 +1,15 @@
 """Video transition effects module."""
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from moviepy.editor import VideoFileClip, CompositeVideoClip, concatenate_videoclips
 from moviepy.video import fx as vfx
 import numpy as np
+import logging
 
 class TransitionEffect:
-    """Base class for transition effects."""
+    """Base class for transition effects.
+    
+    TODO: Add parameter validation and support for more transition types.
+    """
     def __init__(self, duration: float = 1.0):
         self.duration = duration
 
@@ -54,7 +58,10 @@ class SlideTransition(TransitionEffect):
         return CompositeVideoClip([clip1, sliding])
 
 class TransitionManager:
-    """Manages video transitions."""
+    """Manages video transitions.
+    
+    TODO: Add logging for transition errors and support for user-defined transitions.
+    """
     def __init__(self):
         self.transitions = {
             "fade": {
@@ -86,6 +93,7 @@ class TransitionManager:
             transition = transition_class(duration=duration)
             return transition(clip1, clip2)
         except Exception as e:
+            logging.error(f"Error creating transition: {str(e)}")
             print(f"Error creating transition: {str(e)}")
             return None
 
@@ -98,19 +106,33 @@ class TransitionManager:
     ) -> VideoFileClip:
         """Apply transition effect between two clips."""
         if transition_type not in self.transitions:
-            print(f"Unknown transition {transition_type}. Using fade.")
             transition_type = "fade"
-        
-        if not duration:
-            duration = self.transitions[transition_type]["duration"]
-        
-        try:
-            transition_class = self.transitions[transition_type]["effect"]
-            transition = transition_class(duration=duration)
-            return transition(clip1, clip2)
-        except Exception as e:
-            print(f"Error applying transition: {str(e)}")
-            return clip1
+        duration = duration or self.transitions[transition_type]["duration"]
+        return self.create_transition(clip1, clip2, duration, transition_type)
+
+    def apply_transitions(self, clips: List[VideoFileClip], transition_type: str = "fade", duration: Optional[float] = None) -> VideoFileClip:
+        """
+        Apply transitions between a list of clips.
+        Args:
+            clips: List of VideoFileClip or CompositeVideoClip
+            transition_type: Type of transition (e.g., 'fade', 'slide')
+            duration: Duration of the transition
+        Returns:
+            Single VideoClip with transitions applied (concatenated)
+        """
+        if not clips or len(clips) < 2:
+            return clips[0] if clips else None
+        result = [clips[0]]
+        for i in range(1, len(clips)):
+            prev = result[-1]
+            curr = clips[i]
+            transitioned = self.apply_transition(prev, curr, transition_type, duration)
+            result[-1] = transitioned
+        # Concatenate all transitioned clips into a single clip
+        from moviepy.editor import concatenate_videoclips
+        return concatenate_videoclips(result, method='compose')
+
+# TODO: Add more transition types and unit tests for transition effects.
 
 if __name__ == "__main__":
     # Example usage

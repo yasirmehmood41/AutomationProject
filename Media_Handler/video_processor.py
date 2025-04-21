@@ -9,6 +9,9 @@ from moviepy.editor import VideoFileClip, AudioFileClip, ColorClip, TextClip, Co
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from pathlib import Path
+from moviepy.video.io.ffmpeg_writer import ffmpeg_write_video
+from proglog import ProgressBarLogger
+import streamlit as st
 
 # Try to import image generator
 try:
@@ -18,9 +21,17 @@ except ImportError:
     
 logger = logging.getLogger(__name__)
 
+# TODO: Remove unused imports after full audit
+
 @dataclass
 class Resolution:
-    """Video resolution configuration."""
+    """Video resolution configuration.
+    
+    Attributes:
+        name: Resolution label
+        width: Width in pixels
+        height: Height in pixels
+    """
     name: str
     width: int
     height: int
@@ -30,14 +41,24 @@ class Resolution:
         return (self.width, self.height)
 
 class VideoStyle:
-    """Video style configuration."""
+    """Video style configuration for customizing appearance and rendering.
     
+    Attributes:
+        name: Style name
+        font: Font family
+        font_size: Size of text
+        text_color: Color for text
+        background_color: Background color
+        resolution: Resolution label
+        fps: Frames per second
+        transition_duration: Duration of transitions
+        text_margin: Margin around text
+    """
     RESOLUTIONS = {
         'HD': Resolution('HD', 1280, 720),
         'FHD': Resolution('Full HD', 1920, 1080),
         '4K': Resolution('4K', 3840, 2160)
     }
-    
     def __init__(self, 
                  name: str,
                  font: str = "Arial",
@@ -58,16 +79,13 @@ class VideoStyle:
         self.fps = fps
         self.transition_duration = transition_duration
         self.text_margin = text_margin
-        
         # Validate colors
         self._validate_color(text_color, "text_color")
         self._validate_color(background_color, "background_color")
-    
     @property
     def resolution(self) -> Tuple[int, int]:
         """Get resolution dimensions."""
         return self._resolution.dimensions
-    
     @staticmethod
     def _validate_color(color: str, field_name: str) -> None:
         """Validate color format."""
@@ -84,7 +102,6 @@ class VideoStyle:
             valid_colors = {"white", "black", "red", "green", "blue", "yellow"}
             if color.lower() not in valid_colors:
                 raise ValueError(f"Invalid color name for {field_name}: {color}")
-    
     @classmethod
     def get_style(cls, style_name: str) -> 'VideoStyle':
         """Get predefined style by name."""
@@ -126,14 +143,27 @@ class VideoStyle:
             return styles['modern']
         return styles[style_name]
 
+class StreamlitProglogLogger(ProgressBarLogger):
+    def __init__(self, get_bar):
+        super().__init__()
+        self.get_bar = get_bar
+    def callback(self, **changes):
+        if 'progress' in changes:
+            self.get_bar().progress(min(max(int(changes['progress'] * 100), 0), 100))
+
 class VideoProcessor:
-    """Video processor for generating video content."""
+    """Video processor for generating video content.
     
+    Handles scene processing, video compilation, and integration with image generation.
+    """
     def __init__(self, config: Optional[Dict] = None):
         """Initialize video processor."""
         self.config = config or {}
         self.output_dir = os.path.join("output", "videos")
-        os.makedirs(self.output_dir, exist_ok=True)
+        try:
+            os.makedirs(self.output_dir, exist_ok=True)
+        except Exception as e:
+            logger.error(f"Failed to create output directory: {e}")
         self.max_workers = os.cpu_count() or 4
         
         # Initialize image generator if available
@@ -145,7 +175,7 @@ class VideoProcessor:
             logger.warning(f"Failed to initialize image generator: {e}")
     
     def create_text_image(self, text: str, style: VideoStyle) -> np.ndarray:
-        """Create text image using PIL."""
+        """Create text image using PIL. Returns numpy array."""
         if not text or not isinstance(text, str):
             raise ValueError("Invalid text input")
             
@@ -279,43 +309,48 @@ class VideoProcessor:
         Returns:
             Background clip (either image or color)
         """
-        # Try to create image background if we have an image generator
-        if self.image_generator:
-            image_path = self._generate_scene_image(scene, style.name.lower())
-            if image_path and os.path.exists(image_path):
+        bg = scene.get('background', {})
+        if isinstance(bg, dict):
+            bg_type = bg.get('type')
+            if bg_type == 'upload' and bg.get('value'):
                 try:
-                    img_clip = ImageClip(image_path)
-                    img_clip = img_clip.resize(style.resolution)
-                    img_clip = img_clip.set_duration(duration)
-                    return img_clip
+                    return ImageClip(bg['value']).set_duration(duration).resize(style.resolution)
                 except Exception as e:
-                    logger.error(f"Error creating image clip: {e}")
-                    
-        # Fallback to color background
-        bg_color = style.background_color
-        if bg_color.startswith('#'):
-            bg_color = bg_color[1:]
-        rgb_color = tuple(int(bg_color[i:i+2], 16) for i in (0, 2, 4))
-        
-        return ColorClip(size=style.resolution, color=rgb_color, duration=duration)
+                    logger.warning(f"Failed to use uploaded background: {e}")
+            elif bg_type == 'api' and bg.get('value'):
+                try:
+                    # If value is a URL, use it directly; if a search term, fallback to color
+                    if bg['value'].startswith('http'):
+                        return ImageClip(bg['value']).set_duration(duration).resize(style.resolution)
+                except Exception as e:
+                    logger.warning(f"Failed to use API background: {e}")
+            elif bg_type == 'color':
+                color = bg.get('value', '#000000')
+                if color.startswith('#'):
+                    color = color[1:]
+                rgb_color = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
+                return ColorClip(size=style.resolution, color=rgb_color, duration=duration)
+        # Fallback to legacy handling or default
+        return ColorClip(size=style.resolution, color=(0,0,0), duration=duration)
 
     def _process_scene(self, scene: Dict, style: VideoStyle, audio_path: Optional[str] = None) -> Optional[CompositeVideoClip]:
-        """Process a single scene."""
+        print(f"[DIAG] _process_scene called for scene: {scene.get('scene_number', '?')}")
         try:
             duration = scene.get('duration', 5)
-            
+            print(f"[DIAG] Scene duration: {duration}")
             # Create background (either image or color)
             bg_clip = self._create_background_clip(scene, style, duration)
+            print(f"[DIAG] Background clip type: {type(bg_clip)}")
             clips = [bg_clip]
-            
             # Add text elements
             text_elements = scene.get('text', '').split('\n')
+            print(f"[DIAG] Text elements: {text_elements}")
             for j, text in enumerate(text_elements):
                 if not text.strip():
                     continue
-                    
                 try:
                     y_pos = style.text_margin + (j * (style.font_size + 10))
+                    print(f"[DIAG] Adding TextClip: '{text}' at y={y_pos}")
                     text_clip = TextClip(
                         text,
                         fontsize=style.font_size,
@@ -329,6 +364,7 @@ class VideoProcessor:
                     text_clip = text_clip.set_position(('center', y_pos))
                     clips.append(text_clip)
                 except Exception as e:
+                    print(f"[DIAG] Error creating TextClip: {e}")
                     logger.warning(f"Error creating text clip, trying PIL alternative: {e}")
                     try:
                         text_array = self.create_text_image(text, style)
@@ -337,31 +373,42 @@ class VideoProcessor:
                         pil_text_clip = pil_text_clip.set_position(('center', y_pos))
                         clips.append(pil_text_clip)
                     except Exception as e2:
+                        print(f"[DIAG] Error with PIL alternative: {e2}")
                         logger.error(f"Error with PIL alternative: {e2}")
                         continue
-            
+            print(f"[DIAG] All overlay clips: {clips}")
             # Create scene clip
             scene_clip = CompositeVideoClip(clips, size=style.resolution)
             scene_clip = scene_clip.set_duration(duration)
-            
+            print(f"[DIAG] Created CompositeVideoClip for scene {scene.get('scene_number', '?')}")
             # Add audio if available
-            if audio_path and os.path.exists(audio_path):
-                try:
-                    audio = AudioFileClip(audio_path)
-                    scene_clip = scene_clip.set_audio(audio)
-                except Exception as e:
-                    logger.error(f"Error adding audio to scene: {e}")
-            
+            if audio_path:
+                print(f"[DIAG] audio_path provided: {audio_path}")
+                if os.path.exists(audio_path):
+                    print(f"[DIAG] audio file exists: {audio_path}")
+                    try:
+                        audio = AudioFileClip(audio_path)
+                        scene_clip = scene_clip.set_audio(audio)
+                        print(f"[DIAG] Audio attached to scene {scene.get('scene_number', '?')}")
+                    except Exception as e:
+                        print(f"[DIAG] Error adding audio: {e}")
+                        logger.error(f"Error adding audio to scene: {e}")
+                else:
+                    print(f"[DIAG] audio file does NOT exist: {audio_path}")
+            else:
+                print(f"[DIAG] No audio_path provided for scene {scene.get('scene_number', '?')}")
             # Apply transition if specified in scene
             transition = scene.get('transition', 'fade')
+            print(f"[DIAG] Transition type: {transition}")
             if transition == 'fade':
                 # Add fade in/out
                 fade_duration = min(0.5, duration / 4)
                 scene_clip = scene_clip.fadein(fade_duration).fadeout(fade_duration)
-            
+                print(f"[DIAG] Applied fadein/fadeout with duration {fade_duration}")
+            print(f"[DIAG] Returning scene_clip for scene {scene.get('scene_number', '?')}")
             return scene_clip
-            
         except Exception as e:
+            print(f"[DIAG] Error processing scene {scene.get('scene_number', '?')}: {e}")
             logger.error(f"Error processing scene: {e}")
             return None
 
@@ -373,169 +420,114 @@ class VideoProcessor:
         additional_settings: Optional[Dict[str, Any]] = None,
         output_name: Optional[str] = None
     ) -> Optional[str]:
-        """Process scenes into a complete video with branding, transitions, overlays, and intro/outro."""
+        print("[DIAG] video_processor.process_video called")
         try:
             if not scenes:
-                raise ValueError("No scenes provided")
-
-            # --- 1. Add Intro Scene (if configured and valid) ---
-            intro_path = os.path.join("assets", "intro.mp4")
-            intro_clip = None
-            use_intro = additional_settings.get('use_intro', False) if additional_settings else False
-            if use_intro and os.path.exists(intro_path):
-                try:
-                    intro_clip = VideoFileClip(intro_path)
-                    # Try reading duration to check validity
-                    _ = intro_clip.duration
-                except Exception as e:
-                    logger.warning(f"Intro video found but could not be loaded: {e}. Skipping intro.")
-                    intro_clip = None
-            elif use_intro:
-                logger.warning("Intro video requested but not found. Skipping intro.")
-
-            # --- 2. Add Outro Scene (if configured and valid) ---
-            outro_path = os.path.join("assets", "outro.mp4")
-            outro_clip = None
-            use_outro = additional_settings.get('use_outro', False) if additional_settings else False
-            if use_outro and os.path.exists(outro_path):
-                try:
-                    outro_clip = VideoFileClip(outro_path)
-                    _ = outro_clip.duration
-                except Exception as e:
-                    logger.warning(f"Outro video found but could not be loaded: {e}. Skipping outro.")
-                    outro_clip = None
-            elif use_outro:
-                logger.warning("Outro video requested but not found. Skipping outro.")
-
-            # --- 3. Process scene metadata ---
-            processed_scenes = []
-            for scene in scenes:
-                processed = self._process_scene_metadata(scene)
-                processed_scenes.append(processed)
-
-            # --- 4. Style and settings ---
+                print("[DIAG] No scenes provided for video generation. Returning None.")
+                st.error("No scenes provided for video generation. Please add scenes and try again.")
+                return None
+            print(f"[DIAG] scenes: {scenes}")
             style = VideoStyle.get_style(style_name)
-            if additional_settings:
-                # (existing style logic unchanged)
-                if 'video_quality' in additional_settings:
-                    quality = additional_settings['video_quality']
-                    if quality in VideoStyle.RESOLUTIONS:
-                        style._resolution = VideoStyle.RESOLUTIONS[quality]
-                if 'resolution' in additional_settings:
-                    res = additional_settings['resolution']
-                    if isinstance(res, (tuple, list)) and len(res) == 2:
-                        style._resolution = type(style._resolution)(
-                            name=f"Custom {res[0]}x{res[1]}", width=int(res[0]), height=int(res[1])
-                        )
-                if 'aspect_ratio' in additional_settings:
-                    style.aspect_ratio = additional_settings['aspect_ratio']
-                if 'fps' in additional_settings:
-                    style.fps = int(additional_settings['fps'])
-                if 'bitrate' in additional_settings:
-                    style.bitrate = additional_settings['bitrate']
-                if 'text_style' in additional_settings and additional_settings['text_style'] != 'default':
-                    text_style = additional_settings['text_style']
-                    if text_style == 'minimal':
-                        style.font_size = int(style.font_size * 0.9)
-                    elif text_style == 'bold':
-                        style.font_size = int(style.font_size * 1.2)
-            
-            # --- 5. Generate video clips for each scene (with overlays, watermark, transitions) ---
+            print(f"[DIAG] Using style: {style}")
             clips = []
-            logo_path = os.path.join("assets", "logo.png")
-            use_logo = additional_settings.get('use_logo', False) if additional_settings else False
-            for i, scene in enumerate(processed_scenes):
+            voice_system = None
+            try:
+                from Media_Handler.voice_system import VoiceSystem
+                voice_system = VoiceSystem()
+                print("[DIAG] VoiceSystem instantiated for TTS.")
+            except Exception as e:
+                print(f"[DIAG] ERROR: Could not import or instantiate VoiceSystem: {e}")
+                logger.error(f"Could not import or instantiate VoiceSystem: {e}")
+            for i, scene in enumerate(scenes):
                 scene_audio = None
-                if isinstance(audio_files, list) and i < len(audio_files):
-                    scene_audio = audio_files[i]
-                elif isinstance(audio_files, str):
-                    scene_audio = audio_files
-                # Scene clip
-                clip = self._process_scene(
-                    scene,
-                    style,
-                    audio_path=scene_audio
-                )
-                if clip:
-                    # --- Add watermark/logo overlay if requested and valid ---
-                    if use_logo and os.path.exists(logo_path):
-                        try:
-                            logo = (ImageClip(logo_path)
-                                    .set_duration(clip.duration)
-                                    .resize(height=int(style.resolution[1]*0.08))
-                                    .margin(right=10, top=10, opacity=0)
-                                    .set_pos(("right", "top")))
-                            clip = CompositeVideoClip([clip, logo])
-                        except Exception as e:
-                            logger.warning(f"Logo found but could not be loaded: {e}. Skipping logo overlay.")
-                    elif use_logo:
-                        logger.warning("Logo requested but not found. Skipping logo overlay.")
-                    # --- Add lower-third/scene title overlay ---
-                    if scene.get('title'):
-                        title_txt = TextClip(scene['title'], fontsize=style.font_size, font=style.font, color=style.text_color, bg_color="#222222", size=(int(style.resolution[0]*0.7), None)).set_duration(2.5).set_pos(("center", style.resolution[1]*0.85))
-                        clip = CompositeVideoClip([clip, title_txt.set_start(0)])
-                    clips.append(clip)
-                else:
-                    logger.warning(f"Failed to create clip for scene {i+1}")
-
-            # --- 6. Add intro/outro to clips ---
-            if intro_clip:
-                clips = [intro_clip] + clips
-            if outro_clip:
-                clips = clips + [outro_clip]
-
+                # Always use ONLY 'script' for narration/subtitles/overlay
+                narration = scene.get('script', '').strip()
+                # Remove all legacy/extra fields from scene_for_clip except allowed
+                allowed_fields = {'scene_number', 'background', 'script', 'duration', 'transition'}
+                scene_for_clip = {k: v for k, v in scene.items() if k in allowed_fields}
+                scene_for_clip['text'] = narration
+                if narration:
+                    try:
+                        audio_hash = str(hash(narration + str(i)))
+                        output_dir = os.path.join('.', 'Output_Manager', 'outputs')
+                        os.makedirs(output_dir, exist_ok=True)
+                        output_file = os.path.join(output_dir, f'voice_scene_{i+1}_{audio_hash}.mp3')
+                        if not os.path.exists(output_file):
+                            from gtts import gTTS
+                            config = voice_system.config if hasattr(voice_system, 'config') else {}
+                            tts_config = config.get('tts', {}) if config else {}
+                            language = tts_config.get('language', 'en')
+                            speed = float(tts_config.get('speed', 1.0))
+                            slow = True if speed != 1.0 else False
+                            tts = gTTS(text=narration, lang=language, slow=slow)
+                            tts.save(output_file)
+                        scene_audio = os.path.abspath(output_file)
+                        print(f"[DIAG] Generated audio for scene {i+1}: {scene_audio}")
+                    except Exception as e:
+                        print(f"[DIAG] Error generating audio for scene {i+1}: {e}")
+                        logger.error(f"Error generating audio for scene {i+1}: {e}")
+                # Warn if legacy/extra fields exist
+                for legacy in ['text', 'content', 'title', 'subtitle', 'narration']:
+                    if legacy in scene and legacy != 'script':
+                        logger.warning(f"Scene {i+1} contains legacy field '{legacy}'. It will be ignored for overlays/subtitles.")
+                # Backend warning for likely background description
+                if narration.lower().startswith(('show ', 'display ', 'background', 'visual')) or len(narration) > 220:
+                    print(f"[WARN] Scene {i+1} narration may contain background/visual description. Please check your script field.")
+                try:
+                    clip = self._process_scene(
+                        scene_for_clip,
+                        style,
+                        audio_path=scene_audio
+                    )
+                    print(f"[DIAG] scene {i} clip: {clip}, type: {type(clip)}")
+                    if clip:
+                        clips.append(clip)
+                    else:
+                        print(f"[DIAG] Failed to create clip for scene {i}")
+                except Exception as e:
+                    print(f"[DIAG] Exception processing scene {i}: {e}")
+            print(f"[DIAG] All clips: {clips}")
+            print(f"[DIAG] Types in clips: {[type(c) for c in clips]}")
+            # Defensive: filter out None
+            clips = [c for c in clips if c is not None]
             if not clips:
-                raise ValueError("No valid clips generated")
-
-            # --- 7. Apply transitions between scenes ---
-            from Media_Handler.transitions import TransitionManager
-            transition_manager = TransitionManager()
-            final_clips = []
-            for idx, clip in enumerate(clips):
-                final_clips.append(clip)
-                # Add transition if not last
-                if idx < len(clips)-1:
-                    transition_type = style.__dict__.get('transition', 'fade')
-                    transition = transition_manager.create_transition(clip, clips[idx+1], duration=style.transition_duration, type=transition_type)
-                    if transition:
-                        final_clips.append(transition)
-
-            # --- 8. Concatenate all clips ---
-            final_clip = concatenate_videoclips(final_clips, method="compose")
+                print("[DIAG] No valid clips to compile. Returning None.")
+                return None
+            print("[DIAG] About to call apply_transitions")
+            try:
+                from Media_Handler.transitions import TransitionManager
+                transition_manager = TransitionManager()
+            except Exception as e:
+                print(f"[DIAG] ERROR: Could not import or instantiate TransitionManager: {e}")
+                logger.error(f"Could not import or instantiate TransitionManager: {e}")
+                return None
+            final_clip = transition_manager.apply_transitions(clips, transition_type="fade")
+            print(f"[DIAG] final_clip after transitions: {final_clip}, type: {type(final_clip)}")
+            if isinstance(final_clip, list):
+                print("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
+                logger.error("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
+                return None
+            # Generate output path
             import time
             timestamp = int(time.time())
-            style = VideoStyle.get_style(style_name)
-            resolution_name = style.resolution[0] if hasattr(style, 'resolution') else 'FHD'
-            if output_name:
-                output_path = os.path.join(self.output_dir, output_name)
-                if not output_path.endswith('.mp4'):
-                    output_path += '.mp4'
-            else:
-                output_path = os.path.join(
-                    self.output_dir, 
-                    f"video_{style_name}_{resolution_name}_{timestamp}.mp4"
-                )
-            # --- 9. Render final video ---
+            output_path = output_name or f"{style_name}_{timestamp}.mp4"
+            print(f"[DIAG] About to write video file. final_clip type: {type(final_clip)}")
             final_clip.write_videofile(
                 output_path,
                 codec='libx264',
-                fps=style.fps,
-                threads=self.max_workers,
-                logger='bar',
-                bitrate=getattr(style, 'bitrate', None)
+                audio_codec='aac',
+                fps=24
             )
-            logger.info(f"Video generated successfully: {output_path}")
-            if os.path.exists(output_path):
-                logger.info(f"Output file verified at: {output_path}")
-            else:
-                logger.error(f"Expected output file not found at: {output_path}")
+            print(f"[DIAG] Video written successfully to {output_path}")
+            print(f"[DIAG] Returning output_path: {output_path}")
             return output_path
         except Exception as e:
-            logger.error(f"Error processing video: {e}")
+            print(f"[DIAG] Error in process_video: {e}")
+            logger.error(f"Error in process_video: {e}")
             return None
 
     def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None):
-        """Alias for process_video, for compatibility."""
+        print("[DIAG] video_processor.compile_video called")
         return self.process_video(scenes, audio_files, style_name, additional_settings, output_name)
 
     def create_preview(self, scenes: List[Dict], style_name: str = "modern") -> Optional[str]:
@@ -599,3 +591,5 @@ class VideoProcessor:
         except Exception as e:
             logger.error(f"Error creating preview: {e}")
             return None
+
+# TODO: Review and complete all method implementations. Add robust error handling and logging for all file operations and external calls.

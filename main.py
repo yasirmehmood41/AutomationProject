@@ -1,24 +1,27 @@
 """Main script for video generation system."""
 import os
-from pathlib import Path
 import yaml
+from pathlib import Path
 from typing import Dict, List, Optional
 from Content_Engine.api_generator import ScriptGenerator
 from Content_Engine.scene_generator import generate_scene_metadata
 from Media_Handler.voice_system import VoiceSystem
 from Media_Handler.video_processor import VideoProcessor
+from Media_Handler.video_logic import VideoLogic
 import logging
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def load_config(config_path: str = "config.yaml") -> Dict:
-    """Load configuration from YAML file."""
+    """Load configuration from YAML file. Returns config dict or empty dict on failure."""
     try:
         with open(config_path, 'r') as file:
             return yaml.safe_load(file)
     except Exception as e:
+        logger.error(f"Error loading config: {e}")
         print(f"Error loading config: {e}")
         return {}
 
@@ -116,6 +119,7 @@ def main():
         script_generator = ScriptGenerator()
         voice_system = VoiceSystem()
         video_processor = VideoProcessor()
+        video_logic_handler = VideoLogic(config.get('video', {}))
         
         print("\n=== Video Generation System ===")
         
@@ -175,11 +179,37 @@ def main():
         # Process video with scene metadata
         print("\nProcessing video...")
         try:
-            output_file = video_processor.process_video(scenes, audio_files, style)
+            # First process scenes through video logic
+            processed_scenes = []
+            for i, scene in enumerate(scenes):
+                scene_audio = audio_files[i] if i < len(audio_files) else None
+                processed = video_logic_handler.process_scene(scene, style, scene_audio)
+                if processed:
+                    processed_scenes.append(processed)
+                else:
+                    logger.warning(f"Failed to process scene {i+1}")
+            
+            if not processed_scenes:
+                logger.error("No scenes were successfully processed")
+                return
+            
+            # Then generate final video
+            output_file = video_processor.process_video(processed_scenes, audio_files, style)
             if output_file:
                 print(f"\nVideo generated successfully: {output_file}")
+                
+                # Save debug info if enabled
+                if config.get('debug_mode', False):
+                    debug_file = os.path.join(os.path.dirname(output_file), 'debug_info.json')
+                    try:
+                        with open(debug_file, 'w') as f:
+                            json.dump(video_logic_handler.debug_data, f, indent=2)
+                        print(f"Debug information saved to: {debug_file}")
+                    except Exception as e:
+                        logger.error(f"Failed to save debug info: {e}")
             else:
                 print("\nError: Failed to generate video")
+                
         except Exception as e:
             logger.error(f"Error processing video: {e}")
             return

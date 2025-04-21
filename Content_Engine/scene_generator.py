@@ -14,6 +14,8 @@ from .ai_integrations import create_api_hub
 # Initialize logging
 logger = logging.getLogger(__name__)
 
+# TODO: Remove unused imports after full audit
+
 # Download required NLTK data
 try:
     nltk.download('punkt', quiet=True)
@@ -43,25 +45,27 @@ except Exception as e:
     default_provider = None
 
 def estimate_scene_duration(text: str, words_per_second: float = 2.5) -> float:
-    """Estimate scene duration based on word count.
-    
+    """
+    Estimate scene duration based on word count.
+
     Args:
         text: Scene text content
         words_per_second: Average speaking speed (default 2.5 words/sec)
-    
+
     Returns:
-        Estimated duration in seconds
+        Estimated duration in seconds (minimum 5 seconds)
     """
     words = len(text.split())
     duration = words / words_per_second
     return max(5.0, duration)  # Minimum 5 seconds
 
 def extract_visual_cues(text: str) -> str:
-    """Extract visual cues from bracketed text.
-    
+    """
+    Extract visual cues from bracketed text in a scene.
+
     Args:
         text: Scene text content
-    
+
     Returns:
         Extracted visual cue text or empty string
     """
@@ -71,46 +75,43 @@ def extract_visual_cues(text: str) -> str:
     return ""
 
 def generate_ai_visual_description(text: str, niche: str = "tech") -> str:
-    """Generate a visual description using AI if available.
-    
+    """
+    Generate a visual description using AI if available.
+
     Args:
         text: Scene text content
         niche: Content niche
-        
+
     Returns:
         AI-generated visual description or empty string
     """
     if not ai_hub:
         return ""
-        
     try:
         prompt = f"""
         Generate a detailed visual description for a video scene based on this text:
         "{text}"
-        
         The description should be specific, vivid, and filmable.
         Focus on visual elements like setting, action, colors, and mood.
         Keep it under 50 words and make it appropriate for the {niche} niche.
         """
-        
         description = ai_hub.generate_content(
             prompt,
             provider=default_provider,
             content_type="visual_prompt"
         )
-        
-        # Clean up and format
-        return description.strip('"\'').strip()
+        return description
     except Exception as e:
-        logger.error(f"Error generating visual description: {e}")
+        logger.warning(f"AI visual description generation failed: {e}")
         return ""
 
 def split_into_scenes(text: str) -> List[str]:
-    """Split text into logical scenes using NLP.
-    
+    """
+    Split text into logical scenes using NLP.
+
     Args:
         text: Input text to split into scenes
-    
+
     Returns:
         List of scene text segments
     """
@@ -186,11 +187,12 @@ def split_into_scenes(text: str) -> List[str]:
         return [scene.strip() for scene in text.split('\n\n') if scene.strip()]
 
 def ai_scene_segmentation(script_text: str) -> List[Dict]:
-    """Use AI to segment script into scenes with rich metadata.
-    
+    """
+    Use AI to segment script into scenes with rich metadata.
+
     Args:
         script_text: Raw script text
-        
+
     Returns:
         List of scene dictionaries with metadata
     """
@@ -255,11 +257,12 @@ def ai_scene_segmentation(script_text: str) -> List[Dict]:
         return []
 
 def generate_scene_metadata(script_text: str) -> List[Dict]:
-    """Generate metadata for each scene using NLP and AI.
-    
+    """
+    Generate metadata for each scene using NLP and AI.
+
     Args:
         script_text: Raw script text
-    
+
     Returns:
         List of scene dictionaries with metadata
     """
@@ -318,12 +321,13 @@ def generate_scene_metadata(script_text: str) -> List[Dict]:
         raise
 
 def enhance_scene_metadata(scenes: List[Dict], niche: str = "tech") -> List[Dict]:
-    """Enhance existing scene metadata with AI-generated suggestions.
-    
+    """
+    Enhance existing scene metadata with AI-generated suggestions.
+
     Args:
         scenes: List of scene dictionaries
         niche: Content niche
-        
+
     Returns:
         Enhanced scene metadata
     """

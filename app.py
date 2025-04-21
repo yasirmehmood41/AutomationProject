@@ -1,3 +1,6 @@
+print("[DIAG] app.py loaded")
+
+import time
 import os
 os.environ["IMAGEMAGICK_BINARY"] = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
 
@@ -11,18 +14,17 @@ st.set_page_config(
 
 """Streamlit web interface for video generation system."""
 
-import os
 import yaml
 import json
-import time
 from typing import Dict, List, Optional, Tuple
 from Content_Engine.api_generator import ScriptGenerator
 from Content_Engine.scene_generator import generate_scene_metadata
-from Media_Handler.voice_system import VoiceSystem
-from Media_Handler.video_processor import VideoProcessor
+from Media_Handler.video_processor import VideoProcessor, StreamlitProglogLogger
 from Media_Handler.video_logic import VideoLogic
 import logging
 from pathlib import Path
+from utils.config_loader import load_config
+import sys
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -73,7 +75,10 @@ def load_config(config_path: str = "config.yaml") -> dict:
         with open(config_path, 'r') as file:
             return yaml.safe_load(file)
     except Exception as e:
+        logger.error(f"Error loading config: {e}")
         st.error(f"Error loading config: {e}")
+        if st.button("Retry Loading Config", key="retry_config"):
+            st.rerun()
         return {}
 
 def load_project(project_path: str) -> dict:
@@ -82,7 +87,10 @@ def load_project(project_path: str) -> dict:
         with open(project_path, 'r') as file:
             return json.load(file)
     except Exception as e:
+        logger.error(f"Error loading project: {e}")
         st.error(f"Error loading project: {e}")
+        if st.button("Retry Loading Project", key="retry_project"):
+            st.rerun()
         return {}
 
 def save_project(project_data: dict, project_name: str) -> str:
@@ -94,121 +102,45 @@ def save_project(project_data: dict, project_name: str) -> str:
             json.dump(project_data, file, indent=2)
         return project_path
     except Exception as e:
+        logger.error(f"Error saving project: {e}")
         st.error(f"Error saving project: {e}")
-        return ""
+        if st.button("Retry Saving Project", key="retry_save_project"):
+            st.rerun()
+        return None
 
 def generate_script(script_generator: ScriptGenerator, generation_method: str) -> Tuple[str, Dict]:
     """Generate script based on selected method."""
     script_text = ""
     metadata = {}
-    
-    if generation_method == "AI Generation":
-        col1, col2 = st.columns([3, 1])
-        
-        with col1:
-            # AI Provider selection
-            ai_provider = st.selectbox(
-                "Select AI Provider:",
-                options=["OpenAI", "Anthropic", "Llama", "Custom"],
-                index=0
-            )
-            
-            # Topic input
-            topic = st.text_input("Enter your video topic:", placeholder="e.g., Benefits of meditation")
-            
-            # Target audience
-            audience = st.text_input("Target audience:", placeholder="e.g., Beginners interested in mindfulness")
-            
-            # Tone selection
-            tone = st.selectbox(
-                "Select tone:",
-                options=["Informative", "Casual", "Professional", "Entertaining", "Educational"],
-                index=0
-            )
-            
-            # Length selection
-            length = st.select_slider(
-                "Script length:",
-                options=["Very Short", "Short", "Medium", "Long", "Very Long"],
-                value="Medium"
-            )
-            
-            # Additional instructions
-            additional_instructions = st.text_area(
-                "Additional instructions (optional):",
-                placeholder="Any specific points to include or exclude..."
-            )
-            
-            # API key input (with secure input)
-            api_key = st.text_input(f"{ai_provider} API Key:", type="password")
-            
-            # Save API key option
-            save_api_key = st.checkbox("Save API key for future use")
-            
-            prompt = f"Create a {length.lower()} video script about '{topic}' in a {tone.lower()} tone for {audience}."
-            if additional_instructions:
-                prompt += f" Additional instructions: {additional_instructions}"
-            
-            metadata = {
-                "generation_method": "ai",
-                "ai_provider": ai_provider,
-                "topic": topic,
-                "audience": audience,
-                "tone": tone,
-                "length": length
-            }
-            
-            if st.button("Generate Script", key="generate_ai_script"):
-                if not api_key:
-                    st.error("Please provide an API key to use AI generation.")
-                    return script_text, metadata
-                
-                with st.spinner(f"Generating script using {ai_provider}..."):
+    try:
+        if generation_method == "AI Generation":
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                ai_provider = st.selectbox(
+                    "Select AI Provider:",
+                    options=["OpenAI", "Anthropic", "Llama", "Custom"],
+                    index=0
+                )
+                topic = st.text_input("Enter Topic:")
+                if st.button("Generate Script"):
                     try:
-                        # Set the API key for the generator
-                        script_generator.set_api_key(ai_provider.lower(), api_key)
-                        
-                        # Save API key if requested
-                        if save_api_key:
-                            # We'd implement proper secure storage here
-                            st.success(f"{ai_provider} API key saved for future use.")
-                        
-                        # Generate the script
-                        script_text = script_generator.generate_with_ai(
-                            prompt=prompt,
-                            provider=ai_provider.lower()
-                        )
+                        script_text, metadata = script_generator.generate(topic, ai_provider)
                         st.session_state.script_text = script_text
                         st.session_state.script_metadata = metadata
                         st.success("Script generated successfully!")
                     except Exception as e:
-                        st.error(f"Error generating script: {e}")
-        
-        with col2:
-            st.markdown("### AI Generation Tips")
-            st.markdown("- Be specific about your topic")
-            st.markdown("- Define your audience clearly")
-            st.markdown("- Choose the right tone for your content")
-            st.markdown("- Specify any important details")
-    else:  # Manual input
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            script_text = st.text_area("Enter your script:", height=300)
-            if script_text and st.button("Save Script", key="save_manual_script"):
-                st.session_state.script_text = script_text
-                metadata = {"manual_input": True}
-                st.session_state.script_metadata = metadata
-                st.success("Script saved successfully!")
-        
-        with col2:
-            st.markdown("### Script Writing Tips")
-            st.markdown("- Keep scenes concise and focused")
-            st.markdown("- Include visual cues in [brackets]")
-            st.markdown("- Use engaging hooks at the beginning")
-            st.markdown("- Consider your target audience")
-            
-            st.markdown("### Example Format")
-            st.code("""
+                        logger.error(f"Failed to generate script: {e}")
+                        st.error(f"Failed to generate script: {e}")
+                        if st.button("Retry Script Generation", key="retry_script_gen"):
+                            st.rerun()
+            with col2:
+                st.markdown("### Script Writing Tips")
+                st.markdown("- Keep scenes concise and focused")
+                st.markdown("- Include visual cues in [brackets]")
+                st.markdown("- Use engaging hooks at the beginning")
+                st.markdown("- Consider your target audience")
+                st.markdown("### Example Format")
+                st.code("""
 Scene 1: Intro
 [Show cityscape at sunset]
 Welcome to our guide on...
@@ -216,9 +148,97 @@ Welcome to our guide on...
 Scene 2: Main Point
 [Display chart showing data]
 The key insight here is...
-            """)
-    
-    return script_text, metadata
+                """)
+        else:
+            st.markdown("""
+**Paste your script in the following format (copy-paste ready):**
+
+```json
+[
+  {
+    "scene_number": 1,
+    "title": "Introduction",
+    "background": "Show cityscape at sunset with a mosque in the foreground, modern, clean design, minimalist, professional lighting, high quality, 4k",
+    "script": "Welcome! Today we explore the Five Pillars of Islam—the foundation of a Muslim's faith and practice.",
+    "duration": 6
+  },
+  {
+    "scene_number": 2,
+    "title": "Shahada",
+    "background": "Show a family gathered for prayer in a cozy home.",
+    "script": "The first pillar is Shahada, the declaration of faith.",
+    "duration": 5
+  }
+]
+```
+
+- Each scene **must** have `scene_number`, `title`, and `script` fields.
+- Only the `script` field is used for voiceover/subtitles. It must be unique per scene and not contain background/visual descriptions.
+- No two scenes can have the same `scene_number`.
+- This matches the format returned by AI APIs.
+""")
+            script_text = st.text_area("Paste or write your script below:")
+            valid = True
+            error_msgs = []
+            scenes = []
+            if script_text.strip():
+                try:
+                    parsed = json.loads(script_text)
+                    if not isinstance(parsed, list):
+                        valid = False
+                        error_msgs.append("Script must be a JSON array of scenes.")
+                    else:
+                        seen_numbers = set()
+                        for idx, s in enumerate(parsed):
+                            if not isinstance(s, dict):
+                                valid = False
+                                error_msgs.append(f"Scene {idx+1} is not an object.")
+                                continue
+                            for field in ["scene_number", "title", "script"]:
+                                if field not in s or not str(s[field]).strip():
+                                    valid = False
+                                    error_msgs.append(f"Scene {idx+1} is missing required field: '{field}'.")
+                            # scene_number uniqueness
+                            if 'scene_number' in s:
+                                if s['scene_number'] in seen_numbers:
+                                    valid = False
+                                    error_msgs.append(f"Duplicate scene_number: {s['scene_number']}.")
+                                seen_numbers.add(s['scene_number'])
+                            # script must be unique and not similar to title or background
+                            script = s.get('script', '').strip()
+                            title = s.get('title', '').strip().lower()
+                            background = s.get('background', '').strip().lower()
+                            if script.lower() == title or script.lower() == background:
+                                valid = False
+                                error_msgs.append(f"Scene {idx+1} 'script' must not duplicate the title or background.")
+                            if script.lower().startswith(('show ', 'display ', 'background', 'visual')):
+                                valid = False
+                                error_msgs.append(f"Scene {idx+1} 'script' looks like a background/visual description.")
+                            if len(script) < 2:
+                                valid = False
+                                error_msgs.append(f"Scene {idx+1} 'script' is too short.")
+                        scenes = parsed if valid else []
+                except Exception as e:
+                    valid = False
+                    error_msgs = [f"Script is not valid JSON: {e}"]
+            if not valid:
+                for msg in error_msgs:
+                    st.error(msg)
+            if st.button("Save Script"):
+                if valid and scenes:
+                    st.session_state.script_text = script_text
+                    st.session_state.script_metadata = {"scenes": scenes}
+                    st.success("Script saved successfully!")
+                else:
+                    st.error("Script format is invalid. Please fix errors before saving.")
+            return script_text, {"scenes": scenes if valid else []}
+        return script_text, metadata
+    except Exception as e:
+        logger.error(f"Script generation error: {e}")
+        st.error(f"Script generation error: {e}")
+        if st.button("Retry Script Generation", key="retry_script_gen2"):
+            st.rerun()
+        return "", {}
 
 def scene_editor(scenes: List[Dict]) -> List[Dict]:
     """Interactive scene editor for modifying scene metadata."""
@@ -228,99 +248,130 @@ def scene_editor(scenes: List[Dict]) -> List[Dict]:
     st.info("Edit each scene to customize your video. You can modify text, duration, and visual elements.")
     
     for i, scene in enumerate(edited_scenes):
-        with st.expander(f"Scene {i+1}: {scene.get('title', 'Untitled')}"):
-            edited_scenes[i]['text'] = st.text_area(
-                "Scene Text", 
-                scene.get('text', ''), 
-                key=f"scene_text_{i}"
+        with st.expander(f"Scene {i+1}"):
+            st.markdown("**Scene Narration/Subtitle** (words to be spoken and shown as subtitles)")
+            narration = scene.get('script', '')
+            narration_input = st.text_area("Narration/Subtitle", narration, key=f"scene_script_{i}")
+            edited_scenes[i]['script'] = narration_input
+
+            st.markdown("**Background Source**")
+            bg_option = st.selectbox(
+                "Choose background type",
+                ["Upload", "API Search", "Color/System"],
+                key=f"bg_type_{i}"
             )
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                edited_scenes[i]['duration'] = st.slider(
-                    "Duration (seconds)", 
-                    min_value=1.0, 
-                    max_value=20.0, 
-                    value=float(scene.get('duration', 5.0)),
-                    step=0.5,
-                    key=f"scene_duration_{i}"
-                )
-            
-            with col2:
-                edited_scenes[i]['transition'] = st.selectbox(
-                    "Transition",
-                    options=["cut", "fade", "dissolve", "wipe", "slide"],
-                    index=["cut", "fade", "dissolve", "wipe", "slide"].index(scene.get('transition', 'fade')),
-                    key=f"scene_transition_{i}"
-                )
-            
-            edited_scenes[i]['visual_prompt'] = st.text_area(
-                "Visual Description/Prompt",
-                scene.get('visual_prompt', ''),
-                key=f"scene_visual_{i}"
-            )
+            bg_value = None
+            if bg_option == "Upload":
+                uploaded_file = st.file_uploader("Upload background image", type=["jpg", "jpeg", "png"], key=f"bg_upload_{i}")
+                if uploaded_file:
+                    # Save the uploaded file to a temp location and store path
+                    import tempfile
+                    temp_dir = tempfile.gettempdir()
+                    file_path = os.path.join(temp_dir, uploaded_file.name)
+                    with open(file_path, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+                    bg_value = {"type": "upload", "value": file_path}
+            elif bg_option == "API Search":
+                search_term = st.text_input("Image search term (Pixabay/Unsplash)", value=scene.get('background', {}).get('search', ''), key=f"bg_api_search_{i}")
+                # Placeholder for UI: In production, show thumbnails from API
+                bg_value = {"type": "api", "value": search_term}
+            elif bg_option == "Color/System":
+                color = st.color_picker("Pick a color", value=scene.get('background', {}).get('color', '#000000'), key=f"bg_color_{i}")
+                system_bg = st.selectbox("Or select system background", ["None", "Blur", "Gradient", "Pattern1", "Pattern2"], key=f"bg_sys_{i}")
+                bg_value = {"type": "color", "value": color, "system": system_bg}
+            if bg_value:
+                edited_scenes[i]['background'] = bg_value
+
+            # Additional fields
+            edited_scenes[i]['duration'] = st.number_input("Duration (seconds)", min_value=1.0, max_value=60.0, value=float(scene.get('duration', 5)), step=0.5, key=f"scene_duration_{i}")
+            edited_scenes[i]['transition'] = st.selectbox("Transition", ["fade", "cut", "slide", "none"], index=["fade", "cut", "slide", "none"].index(scene.get('transition', 'fade')), key=f"scene_transition_{i}")
+            edited_scenes[i]['speaker'] = st.text_input("Speaker", value=scene.get('speaker', ''), key=f"scene_speaker_{i}")
+            edited_scenes[i]['emotion'] = st.selectbox("Emotion", ["neutral", "happy", "sad", "excited", "angry", "surprised", "fearful"], index=["neutral", "happy", "sad", "excited", "angry", "surprised", "fearful"].index(scene.get('emotion', 'neutral')), key=f"scene_emotion_{i}")
+            edited_scenes[i]['visual_prompt'] = st.text_area("Visual Prompt (for AI image gen)", value=scene.get('visual_prompt', ''), key=f"scene_visual_prompt_{i}")
+            edited_scenes[i]['audio_effects'] = st.text_input("Audio Effects (comma separated)", value=scene.get('audio_effects', ''), key=f"scene_audio_effects_{i}")
+            edited_scenes[i]['background_music'] = st.text_input("Background Music", value=scene.get('background_music', ''), key=f"scene_bg_music_{i}")
+            edited_scenes[i]['sound_effects'] = st.text_input("Sound Effects (comma separated)", value=scene.get('sound_effects', ''), key=f"scene_sound_effects_{i}")
+            edited_scenes[i]['subtitle_style'] = st.selectbox("Subtitle Style", ["default", "bold", "large", "italic", "highlight"], index=["default", "bold", "large", "italic", "highlight"].index(scene.get('subtitle_style', 'default')), key=f"scene_subtitle_style_{i}")
+            edited_scenes[i]['voice_style'] = st.selectbox("Voice Style", ["male", "female", "child", "robotic", "narrator"], index=["male", "female", "child", "robotic", "narrator"].index(scene.get('voice_style', 'male')), key=f"scene_voice_style_{i}")
+            edited_scenes[i]['notes'] = st.text_area("Internal Notes", value=scene.get('notes', ''), key=f"scene_notes_{i}")
     
     return edited_scenes
 
-def voice_selector(voice_system: VoiceSystem) -> str:
-    """Enhanced voice selection interface."""
-    voices = voice_system.list_available_voices()
-    provider_voices = {k: v for k, v in voices.items()}
-    voice_id = None
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("#### Female Voices")
-        female_voices = {
-            voice_id: voice for voice_id, voice in provider_voices.items()
-            if voice.gender and voice.gender.lower() == 'female'
-        }
-        if not female_voices:
-            st.info("No female voices available")
-        for vid, voice in female_voices.items():
-            if st.button(f"{voice.name} ({voice.language})", key=f"voice_{vid}"):
-                st.session_state.selected_voice_id = vid
-                st.rerun()
-                return vid
-    with col2:
-        st.markdown("#### Male Voices")
-        male_voices = {
-            voice_id: voice for voice_id, voice in provider_voices.items()
-            if voice.gender and voice.gender.lower() == 'male'
-        }
-        if not male_voices:
-            st.info("No male voices available")
-        for vid, voice in male_voices.items():
-            if st.button(f"{voice.name} ({voice.language})", key=f"voice_{vid}"):
-                st.session_state.selected_voice_id = vid
-                st.rerun()
-                return vid
-    st.markdown("#### Other Voices")
-    other_voices = {
-        voice_id: voice for voice_id, voice in provider_voices.items()
-        if not voice.gender or voice.gender.lower() not in ['male', 'female']
+def script_input_section(prepopulate=None):
+    st.header("Video Script Input")
+    st.markdown("""
+    Paste the entire script below in the following JSON format:
+    ```json
+    {
+      "title": "Video Title",
+      "description": "Short description...",
+      "author": "...",
+      "category": "Education",
+      "language": "en",
+      "tags": ["tag1", "tag2"],
+      "scenes": [
+        {"scene_number": 1, "script": "...", "background": {"type": "color", "value": "#000000"}},
+        {"scene_number": 2, "script": "...", "background": {"type": "api", "value": "office"}}
+      ]
     }
-    if not other_voices:
-        st.info("No other voices available")
-    for vid, voice in other_voices.items():
-        if st.button(f"{voice.name} ({voice.language})", key=f"voice_other_{vid}"):
-            st.session_state.selected_voice_id = vid
-            st.rerun()
-            return vid
-    if 'selected_voice_id' in st.session_state:
-        voice_id = st.session_state.selected_voice_id
-        voice = voices.get(voice_id)
-        if voice:
-            st.success(f"**Selected Voice:** {voice.name} ({voice.gender or 'Unknown gender'}, {voice.language})")
-            if st.button("Play Sample"):
-                sample_text = "This is a sample of my voice. I hope you like how it sounds."
-                sample_file = voice_system.backend.generate_voice(sample_text, voice_id)
-                if sample_file:
-                    st.audio(sample_file)
-    return voice_id
+    ```
+    - Only `scene_number`, `script`, and `background` are required per scene initially.
+    - All other fields can be added/edited in the Scene section.
+    """)
+    script_text = st.text_area("Paste your script JSON here", height=300, key="script_json_input", value=prepopulate if prepopulate else "")
+    if st.button("Validate & Continue", key="validate_script_btn"):
+        import json
+        try:
+            data = json.loads(script_text)
+            required_globals = ["title", "scenes"]
+            for g in required_globals:
+                if g not in data:
+                    st.error(f"Missing required global field: {g}")
+                    return None
+            if not isinstance(data['scenes'], list) or not data['scenes']:
+                st.error("'scenes' must be a non-empty list.")
+                return None
+            seen_numbers = set()
+            for idx, scene in enumerate(data['scenes']):
+                if 'scene_number' not in scene or 'script' not in scene or 'background' not in scene:
+                    st.error(f"Scene {idx+1} missing required fields.")
+                    return None
+                if scene['scene_number'] in seen_numbers:
+                    st.error(f"Duplicate scene_number: {scene['scene_number']}")
+                    return None
+                seen_numbers.add(scene['scene_number'])
+            st.session_state['script_data'] = data
+            st.session_state['scenes'] = data['scenes']
+            st.session_state['current_step'] = 2
+            st.success("Script validated! Proceed to Scene editing.")
+            return data
+        except Exception as e:
+            st.error(f"Invalid JSON: {e}")
+    return st.session_state.get('script_data')
 
-def style_selector() -> dict:
+def voice_and_style_selector_tts(default_lang='en', default_speed=1.0):
+    import streamlit as st
+    from utils.config_loader import load_config
+    import yaml, os
+    config = load_config()
+    tts_config = config.get('tts', {}) if config else {}
+    def_lang = tts_config.get('language', default_lang)
+    def_speed = float(tts_config.get('speed', default_speed))
+    st.markdown('### Voice and Style Selection')
+    st.info('Configure Text-to-Speech (TTS) for your video.')
+    tts_lang = st.text_input('TTS Language Code', value=def_lang, help='e.g. en, ur, fr, etc.')
+    tts_speed = st.slider('TTS Speed', min_value=0.5, max_value=2.0, value=def_speed, step=0.1, help='1.0 = normal, other values set slow mode')
+    st.info(f'Current config: language = {tts_lang}, speed = {tts_speed}')
+    if tts_lang != def_lang or tts_speed != def_speed:
+        config['tts'] = {'language': tts_lang, 'speed': tts_speed}
+        config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+        with open(config_path, 'w') as f:
+            yaml.dump(config, f)
+        st.success('TTS config updated!')
+    # Style selection (reuse your style_selector logic here if needed)
+    return tts_lang, tts_speed
+
+def style_selector(prepopulate=None) -> dict:
     """Enhanced video style selector with preview and customization."""
     styles = {
         "modern": {
@@ -413,24 +464,19 @@ def style_selector() -> dict:
 
 def process_video_generation(
     scenes: List[Dict], 
-    voice_system: VoiceSystem, 
     video_processor: VideoProcessor,
     video_logic_handler: VideoLogic,
-    voice_id: str,
     style_config: Dict = None
 ) -> None:
-    import time  # Ensure time is imported at the top of the function
-    """Process video generation."""
+    print("[DIAG] process_video_generation called")
+    print(f"[DIAG] scenes: {scenes}")
+    print(f"[DIAG] video_processor: {video_processor}")
+    print(f"[DIAG] video_logic_handler: {video_logic_handler}")
+    print(f"[DIAG] style_config: {style_config}")
     if not scenes:
+        print("[DIAG] No scenes available for processing. Returning None.")
         st.error("No scenes available for processing.")
         return
-        
-    if not voice_id:
-        st.error("Please select a voice first.")
-        return
-        
-    if not style_config:
-        style_config = {"base_style": "modern"}
         
     # Create a placeholder for progress bar
     progress_placeholder = st.empty()
@@ -441,20 +487,7 @@ def process_video_generation(
     
     try:
         with st.spinner("Generating your video..."):
-            # Phase 1: Voice Generation
-            status_text.markdown("**Generating voice-overs...**")
-            audio_files = []
-            
-            for i, scene in enumerate(scenes):
-                if 'text' in scene:
-                    audio_file = voice_system.backend.generate_voice(scene['text'], voice_id)
-                    if audio_file:
-                        audio_files.append(audio_file)
-                    progress_bar.progress((i + 1) / (len(scenes) * 3))  # First third of progress
-            
-            status_text.markdown("✅ Voice generation complete!")
-            
-            # Phase 2: Scene Processing
+            # Phase 1: Scene Processing
             status_text.markdown("**Processing scenes...**")
             processed_scenes = []
             
@@ -475,37 +508,43 @@ def process_video_generation(
             }
             
             for i, scene in enumerate(scenes):
-                scene_audio = audio_files[i] if i < len(audio_files) else None
                 processed = video_logic_handler.process_scene(
                     scene, 
                     style_dict,
-                    scene_audio
+                    None
                 )
                 if processed:
                     processed_scenes.append(processed)
-                progress_bar.progress((len(scenes) + i + 1) / (len(scenes) * 3))  # Second third
+                progress_bar.progress((i + 1) / (len(scenes) * 2))  # First half of progress
             
             status_text.markdown("✅ Scene processing complete!")
             
-            # Phase 3: Video Compilation
+            # Phase 2: Video Compilation
             status_text.markdown("**Compiling final video...**")
             
+            # Create a Streamlit progress bar for video rendering
+            video_progress_bar = st.progress(0, text="Rendering video...")
+            style_dict["streamlit_logger"] = StreamlitProglogLogger(lambda: video_progress_bar)
+            
+            print("[DIAG] About to call video_processor.compile_video")
             output_file = video_processor.compile_video(
                 scenes=processed_scenes,
                 output_name=f"{style_config.get('base_style', 'video')}_{int(time.time())}.mp4",
-                audio_files=audio_files,
                 additional_settings=style_dict
             )
+            print(f"[DIAG] video_processor.compile_video returned: {output_file}")
             
             for i in range(len(scenes)):
-                progress_bar.progress((2 * len(scenes) + i + 1) / (len(scenes) * 3))  # Final third
+                progress_bar.progress((len(scenes) + i + 1) / (len(scenes) * 2))  # Second half of progress
                 time.sleep(0.1)  # Simulate processing time
                 
             status_text.markdown("✅ Video compilation complete!")
             progress_bar.progress(1.0)
             
+            # Clear progress bar after rendering
+            video_progress_bar.empty()
+            
             # Display completion message and video
-            import time
             retry_count = 0
             max_retries = 5
             retry_delay = 1  # seconds
@@ -550,375 +589,247 @@ def process_video_generation(
                 st.error("Video generation completed, but the output file was not found. Output directory does not exist.")
                 
     except Exception as e:
+        print(f"[DIAG] Exception in process_video_generation: {e}")
+        logger.error(f"Error generating video: {str(e)}")
         st.error(f"Error generating video: {str(e)}")
-        logger.error(f"Video generation error: {str(e)}", exc_info=True)
         
     finally:
         # Always clear the progress bar and status text
         progress_placeholder.empty()
         status_text.empty()
 
-def init_session_state():
-    """Initialize session state variables."""
-    if 'project_data' not in st.session_state:
-        st.session_state.project_data = {}
-    if 'current_step' not in st.session_state:
-        st.session_state.current_step = 1
-    if 'scenes' not in st.session_state:
-        st.session_state.scenes = []
-    if 'selected_tab' not in st.session_state:
-        st.session_state.selected_tab = 0
-    if 'script_text' not in st.session_state:
-        st.session_state.script_text = ""
-    if 'selected_voice_id' not in st.session_state:
-        st.session_state.selected_voice_id = ""
-    if 'selected_style' not in st.session_state:
-        st.session_state.selected_style = "modern"
-
 def main() -> None:
     """Main application function."""
-    init_session_state()
-    
-    # Display header with logo
-    st.markdown('<h1 class="main-header">🎬 Multi-Niche Video Generation System</h1>', unsafe_allow_html=True)
-    
-    # Initialize components
+    if 'script_data' not in st.session_state:
+        st.session_state['script_data'] = None
+    if 'scenes' not in st.session_state:
+        st.session_state['scenes'] = []
+    if 'current_step' not in st.session_state:
+        st.session_state['current_step'] = 1
+    if 'selected_tab' not in st.session_state:
+        st.session_state['selected_tab'] = 0
+
+    st.markdown('<h1 class="main-header">Multi-Niche Video Generator</h1>', unsafe_allow_html=True)
+
     config = load_config()
     script_generator = ScriptGenerator()
-    voice_system = VoiceSystem()
     video_processor = VideoProcessor()
     video_logic_handler = VideoLogic(config.get('video', {}))
-    
-    # Sidebar for project management
-    with st.sidebar:
-        st.markdown("### Project Management")
-        
-        # Project operations
-        project_action = st.radio(
-            "Project Action:",
-            options=["New Project", "Load Project", "Save Project"]
-        )
-        
-        if project_action == "New Project":
-            if st.button("Start New Project"):
-                st.session_state.project_data = {}
-                st.session_state.current_step = 1
-                st.session_state.selected_tab = 0
-                st.session_state.scenes = []
-                st.session_state.script_text = ""
-                st.success("New project started!")
-                st.rerun()
-                
-        elif project_action == "Load Project":
-            # List available projects
-            projects_dir = Path("projects")
-            if projects_dir.exists():
-                project_files = list(projects_dir.glob("*.json"))
-                if project_files:
-                    project_options = [p.stem for p in project_files]
-                    selected_project = st.selectbox("Select Project:", options=project_options)
-                    
-                    if st.button("Load Project"):
-                        project_data = load_project(f"projects/{selected_project}.json")
-                        if project_data:
-                            st.session_state.project_data = project_data
-                            st.session_state.current_step = 1
-                            st.session_state.selected_tab = 0
-                            # Load saved project data into session
-                            if "niche" in project_data:
-                                st.session_state.selected_niche = project_data["niche"]
-                            if "script" in project_data:
-                                st.session_state.script_text = project_data["script"]
-                            if "scenes" in project_data:
-                                st.session_state.scenes = project_data["scenes"]
-                            if "voice_id" in project_data:
-                                st.session_state.selected_voice_id = project_data["voice_id"]
-                            if "style" in project_data:
-                                st.session_state.selected_style = project_data["style"]
-                            st.success(f"Project '{selected_project}' loaded!")
-                            st.rerun()
-                else:
-                    st.info("No saved projects found.")
-            else:
-                st.info("No projects directory found.")
-                
-        elif project_action == "Save Project":
-            project_name = st.text_input("Project Name:")
-            
-            if project_name and st.button("Save Project"):
-                # Collect current project data
-                project_data = {
-                    "name": project_name,
-                    "date": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "niche": st.session_state.get("selected_niche", ""),
-                    "script": st.session_state.get("script_text", ""),
-                    "scenes": st.session_state.get("scenes", []),
-                    "voice_id": st.session_state.get("selected_voice_id", ""),
-                    "style": st.session_state.get("selected_style", "modern")
-                }
-                
-                project_path = save_project(project_data, project_name)
-                if project_path:
-                    st.success(f"Project saved to {project_path}")
-        
-        # System settings
-        st.markdown("### System Settings")
-        debug_mode = st.checkbox("Debug Mode", value=config.get("debug_mode", False))
-        advanced_mode = st.checkbox("Advanced Mode", value=False)
-        
-        if debug_mode:
-            st.info("Debug mode enabled. Logs will be more verbose.")
-        
-        # Help section
-        with st.expander("Help & Documentation"):
-            st.markdown("""
-            #### Quick Help
-            - Start by selecting a content niche
-            - Generate or input your script
-            - Edit scenes as needed
-            - Select voice and style
-            - Generate your video
-            
-            Need more help? Check the [documentation](https://example.com/docs).
-            """)
-    
-    # Main workflow with wizard-style navigation (no st.tabs)
+
     section_titles = [
-        "Script Generation",
-        "Scene Editing",
-        "Voice & Style",
-        "Generate Video"
+        "Script",
+        "Scene",
+        "Voice Over",
+        "Video Generation"
     ]
     current_tab = st.session_state.selected_tab
-    st.markdown(f'<h2 class="section-header">{section_titles[current_tab]}</h2>', unsafe_allow_html=True)
 
-    if current_tab == 0:
-        # --- Script Generation Section ---
-        st.markdown("### Script Generation")
-        niches = script_generator.get_available_niches() + ["islamic"]
-        selected_niche = st.selectbox("Select Content Niche", [n.title() for n in niches], key="niche_select")
-        st.session_state.selected_niche = selected_niche.lower()
-        generation_method = st.radio(
-            "Choose script generation method:",
-            options=["Manual input", "AI Generation"],
-            index=0
-        )
-        script_text = st.session_state.get('script_text', '')
-        script_metadata = st.session_state.get('script_metadata', {})
-        manual_script_saved = st.session_state.get('manual_script_saved', False)
-        if generation_method == "AI Generation":
-            script_text, script_metadata = generate_script(script_generator, "AI Generation")
-            st.session_state.manual_script_saved = True  # Always allow continue after AI
-        else:
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                script_text = st.text_area("Paste your script below (scenes separated as instructed):", script_text, height=250, key="script_input")
-                if script_text and st.button("Save Script", key="save_manual_script"):
-                    st.session_state.script_text = script_text
-                    st.session_state.script_metadata = {"manual_input": True}
-                    st.session_state.manual_script_saved = True
-                    st.success("Script saved successfully!")
-            with col2:
-                st.markdown("### Script Writing Tips")
-                st.markdown("- Keep scenes concise and focused")
-                st.markdown("- Include visual cues in [brackets]")
-                st.markdown("- Use engaging hooks at the beginning")
-                st.markdown("- Consider your target audience")
-                st.markdown("### Example Format")
-                st.code("""
-Scene 1: Intro
-[Show cityscape at sunset]
-Welcome to our guide on...
+    st.sidebar.title("Navigation")
+    for i, title in enumerate(section_titles):
+        if st.sidebar.button(title, key=f"nav_{i}"):
+            print("[DIAG] About to rerun after sidebar navigation")
+            st.session_state.selected_tab = i
+            st.session_state.current_step = i + 1
+            st.rerun()
 
-Scene 2: Main Point
-[Display chart showing data]
-The key insight here is...
-                """)
-        if st.button("Save and Continue", key="continue_to_scene_editing"):
-            if generation_method == "Manual input" and not st.session_state.get('manual_script_saved', False):
-                st.error("Please save your manually entered script before continuing.")
-            elif not script_text:
-                st.error("Please enter or generate a script before continuing.")
-            else:
-                st.session_state.script_text = script_text
-                script_generator.switch_niche(selected_niche.lower())
+    # --- Step 1: Script ---
+    if st.session_state['current_step'] == 1:
+        st.markdown('<h2 class="section-header">Script Input</h2>', unsafe_allow_html=True)
+        st.markdown("""
+        Select how you want to start your project:
+        """)
+        method = st.radio('Choose input method:', ['Manual', 'API/AI'], index=0, horizontal=True, key='script_input_method')
+        script_text = st.session_state.get('script_data', "")
+        script_data = None
+        api_niches = [
+            "Education", "Health", "Finance", "Technology", "Travel", "Lifestyle", "Custom..."
+        ]
+        if method == 'API/AI':
+            st.markdown('#### 1. Fill API Script Request Details')
+            selected_niche = st.selectbox('Niche/Topic:', api_niches, key='niche_select')
+            custom_topic = ""
+            if selected_niche == "Custom...":
+                custom_topic = st.text_input('Custom Niche/Topic:', key='custom_topic')
+            topic = custom_topic if selected_niche == "Custom..." else selected_niche
+            video_title = st.text_input('Video Title:', value="", key='api_video_title')
+            num_scenes = st.number_input('Number of Scenes:', min_value=1, max_value=20, value=5, step=1, key='api_num_scenes')
+            language = st.text_input('Language:', value="en", key='api_language')
+            audience = st.text_input('Target Audience (optional):', value="", key='api_audience')
+            custom_instructions = st.text_area('Custom Instructions (optional):', value="", key='api_custom_instructions')
+            api_url = st.text_input('API Endpoint URL', value='', help='Paste the API endpoint that returns your script in JSON format.', key='api_url')
+            st.markdown('''<small>Example API: <code>https://api.example.com/video-script</code></small>''', unsafe_allow_html=True)
+            st.markdown('**Summary of API Request:**')
+            st.json({
+                "topic": topic,
+                "title": video_title,
+                "num_scenes": num_scenes,
+                "language": language,
+                "audience": audience,
+                "instructions": custom_instructions
+            })
+            if st.button('Fetch Script from API'):
+                import requests
                 try:
-                    scenes = generate_scene_metadata(script_text)
-                    if not scenes:
-                        st.error("Could not split script into scenes. Please check the script content format.")
-                    else:
-                        st.session_state.scenes = scenes
-                        st.session_state.current_step = 2
-                        st.session_state.selected_tab = 1
-                        st.session_state.manual_script_saved = False  # Reset for next time
-                        st.rerun()
+                    payload = {
+                        "topic": topic,
+                        "title": video_title,
+                        "num_scenes": num_scenes,
+                        "language": language,
+                        "audience": audience,
+                        "instructions": custom_instructions
+                    }
+                    resp = requests.post(api_url, json=payload)
+                    resp.raise_for_status()
+                    script_json = resp.text
+                    st.session_state['script_data'] = script_json
+                    st.session_state['scenes'] = json.loads(script_json)['scenes'] if 'scenes' in json.loads(script_json) else json.loads(script_json)
+                    st.success('Script fetched successfully!')
                 except Exception as e:
-                    st.error(f"Error generating scene metadata: {e}")
-
-    elif current_tab == 1:
-        # --- Scene Editing Section ---
-        st.markdown("### Scene Editor")
-        if 'scenes' not in st.session_state or not st.session_state.scenes:
-            st.warning("Please provide a script and generate scenes in the previous step first.")
-            if st.button("Back to Script Generation", key="back_to_script"):
-                st.session_state.selected_tab = 0
-                st.rerun()
+                    st.error(f'Failed to fetch script: {e}')
+            st.markdown('---')
         else:
-            # Always initialize scene_editor_state from script scenes if not present or different length
-            if ('scene_editor_state' not in st.session_state or
-                not st.session_state.scene_editor_state.get("scenes") or
-                len(st.session_state.scene_editor_state["scenes"]) != len(st.session_state.scenes)):
-                st.session_state.scene_editor_state = {"scenes": [scene.copy() for scene in st.session_state.scenes]}
-            scenes_state = st.session_state.scene_editor_state["scenes"]
-            st.info("Edit, add, or remove scenes. You can modify text, duration, and visual elements.")
-            remove_indices = []
-            for i, scene in enumerate(scenes_state):
-                with st.expander(f"Scene {i+1}: {scene.get('title', 'Untitled')}"):
-                    scenes_state[i]['text'] = st.text_area(
-                        "Scene Text", 
-                        scene.get('text', ''), 
-                        key=f"scene_text_{i}"
-                    )
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        scenes_state[i]['duration'] = st.slider(
-                            "Duration (seconds)", 
-                            min_value=1.0, 
-                            max_value=20.0, 
-                            value=float(scene.get('duration', 5.0)),
-                            step=0.5,
-                            key=f"scene_duration_{i}"
-                        )
-                    with col2:
-                        scenes_state[i]['transition'] = st.selectbox(
-                            "Transition",
-                            options=["cut", "fade", "dissolve", "wipe", "slide"],
-                            index=["cut", "fade", "dissolve", "wipe", "slide"].index(scene.get('transition', 'fade')),
-                            key=f"scene_transition_{i}"
-                        )
-                    scenes_state[i]['visual_prompt'] = st.text_area(
-                        "Visual Description/Prompt",
-                        scene.get('visual_prompt', ''),
-                        key=f"scene_visual_{i}"
-                    )
-                    if st.button(f"Remove Scene {i+1}", key=f"remove_scene_{i}"):
-                        remove_indices.append(i)
-            for idx in sorted(remove_indices, reverse=True):
-                del scenes_state[idx]
-            if st.button("Add Scene", key="add_scene"):
-                scenes_state.append({
-                    "text": "",
-                    "duration": 5.0,
-                    "transition": "fade",
-                    "visual_prompt": "",
-                    "title": f"Scene {len(scenes_state)+1}"
-                })
-            nav_cols = st.columns([1, 2, 1])
-            with nav_cols[0]:
-                if st.button("Back", key="scene_edit_back"):
-                    st.session_state.selected_tab = 0
+            st.markdown('#### Paste or Edit Your Script')
+        st.markdown('**Copy and use the sample format below (works for both manual and API):**')
+        st.code('''{
+  "title": "Video Title",
+  "description": "Short description...",
+  "author": "...",
+  "category": "Education",
+  "language": "en",
+  "tags": ["tag1", "tag2"],
+  "scenes": [
+    {"scene_number": 1, "script": "...", "background": {"type": "color", "value": "#000000"}},
+    {"scene_number": 2, "script": "...", "background": {"type": "api", "value": "office"}}
+  ]
+}''', language='json')
+        script_area = st.text_area("Paste or edit your script JSON here", height=300, key="script_json_input", value=script_text)
+        if st.button("💾 Save Script", key="save_script_btn"):
+            import json
+            try:
+                data = json.loads(script_area)
+                st.session_state['script_data'] = data
+                st.session_state['scenes'] = data['scenes']
+                st.success("Script saved!")
+            except Exception as e:
+                st.error(f"Invalid JSON: {e}")
+        st.markdown('---')
+        st.markdown('**Tip:** The API endpoint must return a JSON with a `scenes` array as shown above.')
+        col1, col2 = st.columns([1, 1])
+        with col2:
+            if st.button("➡️ Continue to Scene Editor", key="continue_to_scene_btn"):
+                import json
+                try:
+                    data = json.loads(st.session_state['script_data']) if isinstance(st.session_state['script_data'], str) else st.session_state['script_data']
+                    st.session_state['script_data'] = data
+                    st.session_state['scenes'] = data['scenes']
+                    st.session_state['current_step'] = 2
+                    print("[DIAG] Advancing to Scene Editor step")
                     st.rerun()
-            with nav_cols[2]:
-                if st.button("Save and Continue", key="continue_to_voice_style"):
-                    st.session_state.scenes = scenes_state.copy()
-                    st.session_state.current_step = 3
-                    st.session_state.selected_tab = 2
-                    st.rerun()
-
-    elif current_tab == 2:
-        # --- Voice & Style Selection Section ---
-        st.markdown('<h2 class="section-header">Voice & Style Selection</h2>', unsafe_allow_html=True)
-        if 'scenes' not in st.session_state or not st.session_state.scenes:
-            st.warning("Please complete the previous steps first.")
-            if st.button("Back to Scene Editing", key="back_to_scene"):
-                st.session_state.selected_tab = 1
+                except Exception as e:
+                    st.error(f"Invalid JSON: {e}")
+    # --- Step 2: Scene ---
+    elif st.session_state['current_step'] == 2:
+        st.markdown('<h2 class="section-header">Scene Editor</h2>', unsafe_allow_html=True)
+        scenes = st.session_state['scenes'] if 'scenes' in st.session_state else []
+        edited_scenes = scene_editor(scenes)
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            st.markdown('<style>div.stButton > button {background-color: #1976d2; color: white;}</style>', unsafe_allow_html=True)
+            if st.button("⬅️ Back to Script", key="back_to_script_btn"):
+                st.session_state['current_step'] = 1
+                print("[DIAG] Going back to Script section")
                 st.rerun()
-        else:
-            voice_style_cols = st.columns(2)
-            with voice_style_cols[0]:
-                voice_id = voice_selector(voice_system)
-            with voice_style_cols[1]:
-                style_config = style_selector()
-            nav_cols = st.columns([1, 2, 1])
-            with nav_cols[0]:
-                if st.button("Back", key="voice_style_back"):
-                    st.session_state.selected_tab = 1
-                    st.rerun()
-            with nav_cols[2]:
-                if st.button("Save and Continue", key="continue_to_video_gen"):
-                    if ('selected_voice_id' in st.session_state and st.session_state.selected_voice_id and 
-                        'selected_style' in st.session_state and st.session_state.selected_style):
-                        st.session_state.current_step = 4
-                        st.session_state.selected_tab = 3
-                        st.rerun()
-
-    elif current_tab == 3:
-        # --- Generate Video Section ---
-        st.markdown('<h2 class="section-header">Generate Video</h2>', unsafe_allow_html=True)
-        if ('scenes' not in st.session_state or not st.session_state.scenes or
-            'selected_voice_id' not in st.session_state or not st.session_state.selected_voice_id or
-            'selected_style' not in st.session_state or not st.session_state.selected_style):
-            st.warning("Please complete all previous steps before generating video.")
-            if st.button("Back to Voice & Style", key="back_to_voice"):
-                st.session_state.selected_tab = 2
+        with col2:
+            st.markdown('<style>div.stButton > button {background-color: #43a047; color: white;}</style>', unsafe_allow_html=True)
+            if st.button("💾 Save Scenes", key="save_scenes_btn"):
+                st.session_state['scenes'] = edited_scenes
+                st.success("Scenes saved!")
+        with col3:
+            st.markdown('<style>div.stButton > button {background-color: #8bc34a; color: black;}</style>', unsafe_allow_html=True)
+            if st.button("➡️ Continue to Voice Over", key="continue_to_voiceover_btn"):
+                st.session_state['scenes'] = edited_scenes
+                st.session_state['current_step'] = 3
+                print("[DIAG] Advancing to Voice Over step")
                 st.rerun()
-        else:
-            # Display summary of selections
-            st.markdown("### Project Summary")
-            summary_cols = st.columns(3)
-            with summary_cols[0]:
-                st.markdown(f"**Content Niche:** {st.session_state.selected_niche.title()}")
-                st.markdown(f"**Script Length:** {len(st.session_state.script_text)} characters")
-            with summary_cols[1]:
-                st.markdown(f"**Number of Scenes:** {len(st.session_state.scenes)}")
-                voice = voice_system.list_available_voices().get(st.session_state.selected_voice_id)
-                if voice:
-                    st.markdown(f"**Voice:** {voice.name} ({voice.gender or 'Unknown'})")
-            with summary_cols[2]:
-                st.markdown(f"**Style:** {st.session_state.selected_style.title()}")
-                est_duration = sum(float(scene.get('duration', 5.0)) for scene in st.session_state.scenes)
-                st.markdown(f"**Estimated Duration:** {est_duration:.1f} seconds")
-            # --- Video Settings UI ---
-            st.markdown("#### Video Settings")
-            # Aspect Ratio
-            aspect_ratios = {"16:9": (16, 9), "9:16": (9, 16), "1:1": (1, 1), "4:5": (4, 5)}
-            aspect_label = st.selectbox("Aspect Ratio", list(aspect_ratios.keys()), index=0)
-            aspect = aspect_ratios[aspect_label]
-            # Resolution presets
-            res_presets = ["HD (1280x720)", "Full HD (1920x1080)", "4K (3840x2160)", "Custom"]
-            res_choice = st.selectbox("Resolution", res_presets, index=1)
-            if res_choice == "Custom":
-                width = st.number_input("Width (px)", min_value=320, max_value=4096, value=1920)
-                height = st.number_input("Height (px)", min_value=320, max_value=4096, value=1080)
-            else:
-                preset_map = {"HD (1280x720)": (1280, 720), "Full HD (1920x1080)": (1920, 1080), "4K (3840x2160)": (3840, 2160)}
-                width, height = preset_map[res_choice]
-            # Adjust for aspect ratio
-            aspect_w, aspect_h = aspect
-            if width / aspect_w * aspect_h != height:
-                # Snap height to match aspect ratio
-                height = int(width / aspect_w * aspect_h)
-            # Frame rate
-            fps = st.number_input("Frame Rate (fps)", min_value=15, max_value=60, value=30)
-            # Bitrate (optional, advanced)
-            bitrate = st.text_input("Bitrate (e.g. 4M, 8M, 16M)", value="8M")
-            if st.button("Generate Video", key="final_generate"):
-                style_config = {
-                    "base_style": st.session_state.selected_style,
-                    "video_quality": st.session_state.get("selected_quality", "FHD"),
-                    "aspect_ratio": aspect_label,
-                    "resolution": (width, height),
-                    "fps": fps,
-                    "bitrate": bitrate
-                }
-                process_video_generation(
-                    st.session_state.scenes,
-                    voice_system,
-                    video_processor,
-                    video_logic_handler,
-                    st.session_state.selected_voice_id,
-                    style_config
+
+    # --- Step 3: Voice Over ---
+    elif st.session_state['current_step'] == 3:
+        st.markdown('<h2 class="section-header">Voice Over</h2>', unsafe_allow_html=True)
+        st.info(f"Current number of scenes: {len(st.session_state['scenes'])}")
+        tts_lang = st.session_state.get('tts_lang', 'en')
+        tts_speed = st.session_state.get('tts_speed', 1.0)
+        tts_lang, tts_speed = voice_and_style_selector_tts(default_lang=tts_lang, default_speed=tts_speed)
+        st.session_state['tts_lang'] = tts_lang
+        st.session_state['tts_speed'] = tts_speed
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            st.markdown('<style>div.stButton > button {background-color: #1976d2; color: white;}</style>', unsafe_allow_html=True)
+            if st.button("⬅️ Back to Scene Editor", key="back_to_scene_btn"):
+                st.session_state['current_step'] = 2
+                print("[DIAG] Going back to Scene Editor section")
+                st.rerun()
+        with col2:
+            st.markdown('<style>div.stButton > button {background-color: #43a047; color: white;}</style>', unsafe_allow_html=True)
+            if st.button("💾 Save Voice Settings", key="save_voice_btn"):
+                st.success("Voice settings saved!")
+        with col3:
+            st.markdown('<style>div.stButton > button {background-color: #8bc34a; color: black;}</style>', unsafe_allow_html=True)
+            if st.button("➡️ Continue to Video Generation", key="continue_to_video_btn"):
+                st.session_state['current_step'] = 4
+                print("[DIAG] Advancing to Video Generation step")
+                st.rerun()
+
+    # --- Step 4: Video Generation ---
+    elif st.session_state['current_step'] == 4:
+        st.markdown('<h2 class="section-header">Video Generation</h2>', unsafe_allow_html=True)
+        st.info(f"Current number of scenes: {len(st.session_state['scenes'])}")
+        style_config = st.session_state.get('style_config', None)
+        style_config = style_selector(prepopulate=style_config) if 'style_selector' in globals() else None
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            st.markdown('<style>div.stButton > button {background-color: #1976d2; color: white;}</style>', unsafe_allow_html=True)
+            if st.button("⬅️ Back to Voice Over", key="back_to_voiceover_btn"):
+                st.session_state['current_step'] = 3
+                print("[DIAG] Going back to Voice Over section")
+                st.rerun()
+        with col2:
+            st.markdown('<style>div.stButton > button {background-color: #43a047; color: white;}</style>', unsafe_allow_html=True)
+            if st.button("💾 Save Style", key="save_style_btn"):
+                st.session_state['style_config'] = style_config
+                st.success("Style saved!")
+        with col3:
+            st.markdown('<style>div.stButton > button {background-color: #8bc34a; color: black;}</style>', unsafe_allow_html=True)
+            if st.button("🎬 Generate Video", key="final_generate_video_btn"):
+                print("[DIAG] About to generate video")
+                import time
+                progress_placeholder = st.empty()
+                for percent_complete in range(0, 101, 5):
+                    progress_placeholder.progress(percent_complete / 100, text=f"Generating Video... {percent_complete}%")
+                    time.sleep(0.05)
+                progress_placeholder.progress(1.0, text="Video Generation Complete! 100%")
+                st.success("Video generation started!")
+                output_path = process_video_generation(
+                    scenes=st.session_state['scenes'],
+                    video_processor=video_processor,
+                    video_logic_handler=video_logic_handler,
+                    style_config=style_config
                 )
+                if output_path:
+                    st.session_state['generated_video_path'] = output_path
+        video_path = st.session_state.get('generated_video_path')
+        import os
+        if video_path and os.path.exists(video_path):
+            st.success(f"\U0001F389 Your video has been successfully generated!\n\nSaved at: {video_path}")
+            st.video(video_path)
+            with open(video_path, "rb") as file:
+                st.download_button(
+                    label="Download Video",
+                    data=file,
+                    file_name=os.path.basename(video_path),
+                    mime="video/mp4"
+                )
+        else:
+            st.info("No video has been generated yet. Please click 'Generate Video' above.")
 
 if __name__ == "__main__":
     main()

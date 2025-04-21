@@ -10,6 +10,7 @@ class Scene:
     transitions: Dict = None
     visual_style: Dict = None
     audio_style: Dict = None
+    # TODO: Add support for scene metadata, tags, and multi-language content.
 
     def __str__(self):
         """String representation of the scene for display"""
@@ -20,6 +21,11 @@ class Scene:
         return f"{self.title}\n\n{self.content}"
 
 class ScriptProcessor:
+    """
+    Processes script text into structured scenes with niche-specific settings.
+    
+    TODO: Add error handling for parsing, support for more niches, and unit tests.
+    """
     def __init__(self):
         self.niche_settings = {
             "entertainment": {
@@ -131,3 +137,5 @@ if __name__ == "__main__":
         print(f"\nTitle: {scene.title}")
         print(f"Content: {scene.content}")
         print(f"Duration: {scene.duration}s")
+
+# TODO: Add integration tests for script processing and scene splitting.

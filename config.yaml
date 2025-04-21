@@ -1,228 +1,213 @@
-# Video Generation System Configuration
-# Project Settings
-project:
-  name: "AutomationProject"
-  output_dir: "./Output_Manager/outputs/"
-  temp_dir: "./temp/"
-  log_dir: "./logs/"
-  cache_dir: "./cache/"  # For storing processed media
-  default_niche: "tech"
-  output_directory: "output"
-  default_tone: "serious"
-
-# Media Settings
-media:
-  mode: "auto"  # Options: "auto", "manual"
-  resolution:
-    width: 1920
-    height: 1080
-  fps: 30
-  quality: "high"  # Options: "low", "medium", "high"
-  bitrate: "5000k"  # Higher for better quality
-  imagemagick:
-    path: "magick"  # Using system PATH since ImageMagick is now properly installed
-
-# Media Sources Configuration
-sources:
-  # Pixabay API Configuration
-  pixabay:
+ai_providers:
+  anthropic:
+    api_key: ''
+    max_tokens: 2000
+    model: claude-3-opus-20240229
+    temperature: 0.7
+  custom:
+    headers:
+      Authorization: ''
+    model_param_name: model
+    prompt_param_name: prompt
+    response_path: choices[0].text
+    url: ''
+  default_provider: openai
+  dev_mode: true
+  llama:
+    api_key: ''
+    max_tokens: 2000
+    model: llama-3-70b-instruct
+    temperature: 0.7
+  openai:
+    api_key: ''
+    max_tokens: 2000
+    model: gpt-4-turbo-preview
+    temperature: 0.7
+  stability:
+    api_key: ''
+    cfg_scale: 7.0
+    engine: stable-diffusion-xl-1024-v1-0
+    height: 1024
+    steps: 30
+    width: 1024
+audio:
+  add_noise_reduction: true
+  background_music: true
+  music_volume: 0.2
+  normalize_audio: true
+content_generation:
+  auto_enhance_scripts: true
+  auto_generate_visuals: true
+  cache:
     enabled: true
-    api_key: "YOUR_PIXABAY_API_KEY"
-    image_type: "photo"  # Options: "all", "photo", "illustration", "vector"
-    orientation: "horizontal"  # Options: "all", "horizontal", "vertical"
-    category: ""  # Leave empty for all categories
-    min_width: 1920
-    min_height: 1080
-    safesearch: true
-
-  # Pexels API Configuration
-  pexels:
+    max_size_mb: 1000
+    ttl_days: 7
+  script:
+    max_length: 2000
+    tone_options:
+    - professional
+    - casual
+    - enthusiastic
+    - serious
+    - friendly
+    - informative
+    - entertaining
+    - educational
+  visual_prompts:
+    auto_generate: true
+    detail_level: high
+    style_match: true
+export:
+  export_settings:
+    format: mp4
+    resolution: 1080p
+media:
+  bitrate: 5000k
+  fps: 30
+  imagemagick:
+    path: magick
+  mode: auto
+  quality: high
+  resolution:
+    height: 1080
+    width: 1920
+niches:
+  fitness:
+    script_template: templates/fitness_script.yaml
+    style: motivational
+  politics:
+    script_template: templates/politics_script.yaml
+    style: assertive
+  tech:
+    script_template: templates/tech_script.yaml
+    style: neutral
+performance:
+  export-settings:
+    resolution: 1080p
+  parallel_processing: true
+  preview_quality: medium
+  template-selection:
+    tech: true
+  threads: 4
+  use_gpu: false
+  voice-selection:
+    ElevenLabs: true
+project:
+  cache_dir: ./cache/
+  default_niche: tech
+  default_tone: serious
+  log_dir: ./logs/
+  name: AutomationProject
+  output_dir: ./Output_Manager/outputs/
+  output_directory: output
+  temp_dir: ./temp/
+scene:
+  auto_timing: true
+  default_duration: 5
+  intro:
+    duration: 3.0
     enabled: false
-    api_key: "YOUR_PEXELS_API_KEY"
-    orientation: "landscape"  # Options: "landscape", "portrait", "square"
-    size: "large"  # Options: "large", "medium", "small"
-
-  # Unsplash API Configuration
-  unsplash:
+    text: Presents
+  max_duration: 15
+  min_duration: 3
+  outro:
+    duration: 5.0
     enabled: false
-    api_key: "YOUR_UNSPLASH_API_KEY"
-    orientation: "landscape"  # Options: "landscape", "portrait", "squarish"
-
-  # Local Assets Configuration
+    include_credits: true
+    text: Thanks for watching
+  overlay_text: true
+  random_transitions: false
+  transition_types:
+  - fade
+  - slide
+  - none
+sources:
+  cache:
+    enabled: true
+    expiry_days: 7
+    max_size_mb: 1000
   local:
     enabled: true
     paths:
-      images: "./Content_Engine/assets/images/"
-      videos: "./Content_Engine/assets/videos/"
-      fonts: "./Content_Engine/assets/fonts/"
-      audio: "./Content_Engine/assets/audio/"
-
-  # Cache settings
-  cache:
+      audio: ./Content_Engine/assets/audio/
+      fonts: ./Content_Engine/assets/fonts/
+      images: ./Content_Engine/assets/images/
+      videos: ./Content_Engine/assets/videos/
+  pexels:
+    api_key: YOUR_PEXELS_API_KEY
+    enabled: false
+    orientation: landscape
+    size: large
+  pixabay:
+    api_key: YOUR_PIXABAY_API_KEY
+    category: ''
     enabled: true
-    max_size_mb: 1000  # 1GB cache limit
-    expiry_days: 7     # Cache items expire after 7 days
-
-# Text-to-Speech Configuration
-tts:
-  provider: "google"  # Options: "google", "amazon", "azure", "local"
-  language: "en-US"
-  voice: "en-US-Standard-D"
-  speed: 1.0
-  pitch: 0.0  # -10.0 to 10.0
-  volume_gain_db: 0.0  # -6.0 to 6.0
-
-  # Google TTS specific settings
-  google:
-    api_key: "YOUR_GOOGLE_TTS_API_KEY"
-    use_neural_voice: true
-
-  # Amazon Polly specific settings
-  amazon:
-    region: "us-east-1"
-    access_key: "YOUR_AWS_ACCESS_KEY"
-    secret_key: "YOUR_AWS_SECRET_KEY"
-    voice_engine: "neural"  # Options: "standard", "neural"
-
-  # Azure TTS specific settings
-  azure:
-    api_key: "YOUR_AZURE_TTS_API_KEY"
-    region: "eastus"
-    neural_voice: true
-
-# Voice Settings
-voice:
-  provider: "local"  # Options: elevenlabs, local
-  elevenlabs:
-    voice_id: ""  # Set your ElevenLabs voice ID here
-    api_key: ""   # Set your ElevenLabs API key here or use environment variable
-  local:
-    voice_name: "Default"
-  tone_preferences: 
-    - serious
-    - funny
-    - educational
-
-# Template Settings
+    image_type: photo
+    min_height: 1080
+    min_width: 1920
+    orientation: horizontal
+    safesearch: true
+  unsplash:
+    api_key: YOUR_UNSPLASH_API_KEY
+    enabled: false
+    orientation: landscape
 template:
-  niche_templates: 
-    - product_demo
-    - explainer
-
-# Niche-specific templates
-niches:
-  tech:
-    script_template: "templates/tech_script.yaml"
-    style: "neutral"
-  politics:
-    script_template: "templates/politics_script.yaml"
-    style: "assertive"
-  fitness:
-    script_template: "templates/fitness_script.yaml"
-    style: "motivational"
-
-# Video Export Settings
-video:
-  resolution: "1920x1080"
-  format: "mp4"
-  fps: 30
-
-# Export Settings
-export:
-  export_settings:
-    resolution: 1080p
-    format: mp4
-
-# Text Processing Settings
+  niche_templates:
+  - product_demo
+  - explainer
 text_processing:
+  content_filtering: true
   keyword_extraction: true
   keyword_limit: 5
+  language_detection: true
   sentiment_analysis: true
-  content_filtering: true  # Filter inappropriate content
-  language_detection: true  # Detect language and use appropriate TTS
-
-# Audio Processing
-audio:
-  background_music: true
-  music_volume: 0.2  # Background music volume (0.0 to 1.0)
-  normalize_audio: true
-  add_noise_reduction: true
-
-# Video Style Settings
+tts:
+  language: en
+  speed: 1.0
+video:
+  debug_mode: true
+  output_dir: output_manager/videos
+  resolution: FHD
+  style_name: modern
+video_export:
+  format: mp4
+  fps: 30
+  resolution: 1920x1080
 video_style:
-  # Basic styling
-  font: "Arial"
-  font_size: 100
-  font_color: "white"
-  text_position: "center"  # Options: "center", "bottom", "top"
-  background_color: "#ADD8E6"  # Used if no background image
-  transition: "slide"  # Options: "fade", "slide", "none"
-  transition_duration: 1.0  # In seconds
-
-  # Advanced styling
-  text_opacity: 0.9  # Text opacity (0.0 to 1.0)
-  stroke_width: 2     # Text outline width
-  stroke_color: "black"  # Text outline color
-  text_effect: "typewriter"  # Options: "none", "typewriter", "bounce"
-  background_blur: 5   # Background blur strength (0 to 10)
-  zoom_effect: false   # Enable subtle zoom on images
-  zoom_ratio: 0.05     # How much to zoom (0.01 to 0.2)
-
-  # Animation settings
+  animation_style: subtle
+  background_blur: 5
+  background_color: '#ADD8E6'
+  color_correction:
+    brightness: 0
+    contrast: 0
+    enabled: false
+    saturation: 0
   enable_animations: false
-  animation_style: "subtle"  # Options: "subtle", "medium", "dynamic"
-
-  # Branding
+  font: Arial
+  font_color: white
+  font_size: 100
+  stroke_color: black
+  stroke_width: 2
+  text_effect: typewriter
+  text_opacity: 0.9
+  text_position: center
+  transition: slide
+  transition_duration: 1.0
   watermark:
     enabled: false
-    image_path: "./Content_Engine/assets/branding/logo.png"
-    position: "bottom-right"  # Options: "top-left", "top-right", "bottom-left", "bottom-right"
+    image_path: ./Content_Engine/assets/branding/logo.png
     opacity: 0.7
-
-  # Advanced filters
-  color_correction:
-    enabled: false
-    brightness: 0  # -50 to 50
-    contrast: 0    # -50 to 50
-    saturation: 0  # -50 to 50
-
-# Scene Settings
-scene:
-  default_duration: 5  # In seconds
-  min_duration: 3  # In seconds
-  max_duration: 15  # In seconds
-  auto_timing: true  # Automatically adjust scene duration based on text length
-
-  # Scene transitions
-  transition_types:
-    - "fade"
-    - "slide"
-    - "none"
-  random_transitions: false  # Use random transitions from the list
-
-  # Advanced scene settings
-  intro:
-    enabled: false
-    duration: 3.0
-    text: "Presents"
-
-  outro:
-    enabled: false
-    duration: 5.0
-    text: "Thanks for watching"
-    include_credits: true
-
-# Performance settings
-performance:
-  parallel_processing: true
-  threads: 4  # Number of parallel threads (0 = auto)
-  preview_quality: "medium"  # Quality for previews: "low", "medium", "high"
-  use_gpu: false  # Use GPU acceleration if available
-  voice-selection:
-    ElevenLabs: true
-
-  template-selection:
-    tech: true
-
-  export-settings:
-    resolution: 1080p
+    position: bottom-right
+  zoom_effect: false
+  zoom_ratio: 0.05
+voice:
+  elevenlabs:
+    api_key: ''
+    voice_id: ''
+  local:
+    voice_name: Default
+  provider: local
+  tone_preferences:
+  - serious
+  - funny
+  - educational
