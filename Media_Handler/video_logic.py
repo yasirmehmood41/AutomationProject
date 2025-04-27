@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import json
 from .scene_renderer import SceneRenderer
 from .voice_system import VoiceSystem
+from proglog import ProgressBarLogger
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,6 @@ class VideoLogic:
         }
     
     def _init_scene_renderer(self, style: Dict) -> None:
-        print(f"[DIAG] _init_scene_renderer called with style: {style}")
         resolution = style.get('resolution', (1920, 1080))
         font = style.get('font', 'Arial')
         font_size = style.get('font_size', 36)
@@ -72,7 +72,6 @@ class VideoLogic:
         )
     
     def _extract_highlighted_words(self, text: str) -> List[str]:
-        print(f"[DIAG] _extract_highlighted_words called with text: {text}")
         words = []
         for word in text.split():
             # Remove punctuation
@@ -81,15 +80,12 @@ class VideoLogic:
                 words.append(word)
         
         if not words and self.config.debug_mode:
-            print("[DIAG] No words extracted for highlighting")
             logger.debug("No words extracted for highlighting")
         
         return words
     
     def _save_debug_info(self, scene_number: int, data: Dict) -> None:
-        print(f"[DIAG] _save_debug_info called for scene_number: {scene_number}")
         if not self.config.debug_mode:
-            print("[DIAG] Debug mode not enabled, skipping save_debug_info")
             return
         
         debug_file = os.path.join(self.config.output_dir, 'debug_info.json')
@@ -99,47 +95,46 @@ class VideoLogic:
         try:
             with open(debug_file, 'w') as f:
                 json.dump(self.debug_data, f, indent=2)
-            print(f"[DIAG] Debug info saved to {debug_file}")
         except Exception as e:
-            print(f"[DIAG] Failed to save debug info: {e}")
             logger.error(f"Failed to save debug info: {e}")
     
     def process_scene(
         self,
         scene: Dict,
         style: Dict,
-        audio_file: Optional[str] = None
+        audio_file: Optional[str] = None,
+        subtitle_position: str = 'center',
+        overlay_title: str = '',
+        overlay_author: str = '',
+        overlay_logo_bytes = None,
+        overlay_slogan = None,
+        overlay_color = None,
+        overlay_watermark_bytes = None,
+        overlay_animate = False
     ) -> Optional[Dict]:
-        print(f"[DIAG] process_scene called for scene: {scene.get('scene_number', '?')}")
         try:
             # Initialize scene renderer if needed
             if not self.scene_renderer:
-                print("[DIAG] scene_renderer not initialized, calling _init_scene_renderer")
                 self._init_scene_renderer(style)
             # Extract text for highlighting
             scene_text = scene.get('text', '')
             highlighted_words = self._extract_highlighted_words(scene_text)
-
-            # --- ENFORCE MINIMUM SCENE DURATION BASED ON AUDIO ---
-            min_duration = scene.get('duration', 5.0)
-            if audio_file:
-                try:
-                    audio_duration = self.voice_system.get_audio_duration(audio_file)
-                    print(f"[DIAG] Audio duration for scene {scene.get('scene_number', '?')}: {audio_duration}")
-                    # Add a small buffer (e.g. 0.2s) to avoid cutoff
-                    min_duration = max(min_duration, audio_duration + 0.2)
-                except Exception as e:
-                    print(f"[DIAG] Failed to get audio duration: {e}")
-            scene['duration'] = min_duration
-            # -----------------------------------------------------
-
-            # Render scene (FIX: use render_scene, not render)
+            rendered_scene = None
             try:
-                print(f"[DIAG] Rendering scene {scene.get('scene_number', '?')}")
-                rendered_scene = self.scene_renderer.render_scene(scene, style)
-                print(f"[DIAG] Rendered scene: {rendered_scene}")
+                rendered_scene = self.scene_renderer.render_scene_with_overlay(
+                    scene,
+                    scene.get('duration', 5.0),
+                    overlay_title,
+                    overlay_author,
+                    overlay_logo_bytes,
+                    overlay_slogan,
+                    overlay_color,
+                    overlay_watermark_bytes,
+                    overlay_animate,
+                    style,
+                    subtitle_position
+                )
             except Exception as e:
-                print(f"[DIAG] Rendering failed for scene {scene.get('scene_number', '?')}: {e}")
                 logger.error(f"Rendering failed for scene {scene.get('scene_number', '?')}: {e}")
                 if self.config.debug_mode:
                     self.debug_data['rendering_errors'].append({
@@ -147,13 +142,23 @@ class VideoLogic:
                         'error': str(e)
                     })
                 rendered_scene = None
+            # --- Ensure scene duration >= audio duration ---
+            if audio_file and os.path.exists(audio_file):
+                try:
+                    from moviepy.editor import AudioFileClip
+                    audio_clip = AudioFileClip(audio_file)
+                    audio_duration = audio_clip.duration
+                    if scene.get('duration', 0) < audio_duration:
+                        scene['duration'] = audio_duration
+                    audio_clip.close()
+                except Exception as e:
+                    logger.error(f"Could not check audio duration for scene {scene.get('scene_number','?')}: {e}")
             return {
                 **scene,
                 'rendered': rendered_scene,
                 'highlighted_words': highlighted_words
             }
         except Exception as e:
-            print(f"[DIAG] Error processing scene {scene.get('scene_number', '?')}: {e}")
             logger.error(f"Error processing scene: {e}")
             if self.config.debug_mode:
                 self.debug_data['rendering_errors'].append({
@@ -166,115 +171,253 @@ class VideoLogic:
         self,
         scenes: List[Dict],
         audio_files: Optional[Union[str, List[str]]] = None,
-        style: Optional[Dict] = None
+        style: Optional[Dict] = None,
+        music_config: Optional[dict] = None,
+        logger=None,
+        subtitle_position: str = 'center',
+        overlay_title: str = '',
+        overlay_author: str = '',
+        overlay_logo_bytes = None,
+        overlay_slogan = None,
+        overlay_color = None,
+        overlay_watermark_bytes = None,
+        overlay_animate = False,
+        additional_settings: Optional[Dict] = None
     ) -> Optional[str]:
-        print("[DIAG] process_video called")
+        print("[DIAG] video_logic.process_video called with additional_settings:", additional_settings, flush=True)
+        if additional_settings is not None and 'streamlit_logger' in additional_settings:
+            print("[DIAG] streamlit_logger found in additional_settings", flush=True)
+        else:
+            print("[DIAG] streamlit_logger NOT found in additional_settings", flush=True)
         try:
             if not scenes:
-                print("[DIAG] No scenes provided, aborting.")
                 raise ValueError("No scenes provided")
             # Process scene metadata
             processed_scenes = []
+            total = len(scenes)
             for idx, scene in enumerate(scenes):
-                # Pass the correct audio file for duration enforcement
+                # --- Inject overlays into scene dict ---
+                scene['overlay_logo_bytes'] = overlay_logo_bytes
+                scene['overlay_title'] = overlay_title
+                scene['overlay_author'] = overlay_author
+                scene['overlay_slogan'] = overlay_slogan
+                scene['overlay_watermark_bytes'] = overlay_watermark_bytes
+                # --- Robust audio logic: uploaded > TTS > silent ---
                 audio_file = None
-                if isinstance(audio_files, list) and idx < len(audio_files):
-                    audio_file = audio_files[idx]
-                elif isinstance(audio_files, str):
-                    audio_file = audio_files
-                processed = self.process_scene(scene, style or {}, audio_file)
+                # 1. Uploaded audio (must be provided in scene dict as 'uploaded_audio')
+                if scene.get('uploaded_audio'):
+                    audio_file = scene['uploaded_audio']
+                # 2. TTS (if no uploaded audio and script text exists)
+                elif scene.get('script'):
+                    try:
+                        audio_file = self.voice_system.generate_voice(scene['script'])
+                    except Exception as e:
+                        logger.error(f"TTS generation failed for scene {scene.get('scene_number','?')}: {e}")
+                        audio_file = None
+                # 3. Fallback: silent
+                if not audio_file:
+                    logger.warning(f"No audio for scene {scene.get('scene_number','?')}, video will be silent.")
+                processed = self.process_scene(
+                    scene,
+                    style or {},
+                    audio_file,
+                    subtitle_position,
+                    overlay_title,
+                    overlay_author,
+                    overlay_logo_bytes,
+                    overlay_slogan,
+                    overlay_color,
+                    overlay_watermark_bytes,
+                    overlay_animate
+                )
                 if processed:
                     processed_scenes.append(processed)
-            print(f"[DIAG] processed_scenes: {processed_scenes}")
-            # Generate video clips for each scene
+                else:
+                    logger.warning(f"Scene {idx+1} failed to process or missing audio.")
             clips = []
             for i, scene in enumerate(processed_scenes):
-                # Get scene audio
-                scene_audio = None
-                if isinstance(audio_files, list) and i < len(audio_files):
-                    scene_audio = audio_files[i]
-                elif isinstance(audio_files, str):
-                    scene_audio = audio_files
+                # Use the audio_file selected/created above for each scene
+                audio_file = None
+                if scene.get('uploaded_audio'):
+                    audio_file = scene['uploaded_audio']
+                elif scene.get('script'):
+                    # Try to infer the TTS file path used earlier
+                    tts_path = self.voice_system.generate_voice(scene['script'])
+                    if os.path.exists(tts_path):
+                        audio_file = tts_path
                 if 'rendered' in scene:
                     clip = scene['rendered']
-                    if scene_audio:
+                    if audio_file and os.path.exists(audio_file):
                         try:
-                            clip = clip.set_audio(scene_audio)
+                            from moviepy.editor import AudioFileClip
+                            clip = clip.set_audio(AudioFileClip(audio_file))
                         except Exception as e:
                             logger.error(f"Failed to add audio to scene {i+1}: {e}")
-                    clips.append(clip)
-            print(f"[DIAG] clips before filtering: {clips}")
-            # Filter out None values from clips
-            clips = [clip for clip in clips if clip is not None]
-            print(f"[DIAG] After filtering, clips: {clips}")
-            print(f"[DIAG] Types in clips: {[type(c) for c in clips]}")
-            if not clips:
-                print("[DIAG] No valid video clips to combine. Aborting video generation.")
-                logger.error("[DIAG] No valid video clips to combine. Aborting video generation.")
-                return None
-            # Apply transitions
-            print("[DIAG] About to call apply_transitions")
-            try:
-                from Media_Handler.transitions import TransitionManager
-                transition_manager = TransitionManager()
-            except Exception as e:
-                print(f"[DIAG] ERROR: Could not import or instantiate TransitionManager: {e}")
-                logger.error(f"Could not import or instantiate TransitionManager: {e}")
-                return None
-            transitioned_clips = transition_manager.apply_transitions(clips, transition_type="fade")
-            print(f"[DIAG] Type of transitioned_clips: {type(transitioned_clips)}")
-            print(f"[DIAG] transitioned_clips: {transitioned_clips}")
-            if isinstance(transitioned_clips, list):
-                print(f"[DIAG] Length of transitioned_clips: {len(transitioned_clips)}")
-                for idx, item in enumerate(transitioned_clips):
-                    print(f"[DIAG] transitioned_clips[{idx}] type: {type(item)}, value: {item}")
-            # Flatten if list contains lists (robustness for nested lists)
-            def flatten(lst):
-                for item in lst:
-                    if isinstance(item, list):
-                        yield from flatten(item)
                     else:
-                        yield item
-            from moviepy.editor import concatenate_videoclips
-            if isinstance(transitioned_clips, list):
-                flat_clips = [clip for clip in flatten(transitioned_clips) if clip is not None]
-                print(f"[DIAG] After flattening, length: {len(flat_clips)}")
-                for idx, item in enumerate(flat_clips):
-                    print(f"[DIAG] flat_clips[{idx}] type: {type(item)}, value: {item}")
-                if not flat_clips:
-                    print("[DIAG] No valid video clips after transitions. Aborting video generation.")
-                    logger.error("[DIAG] No valid video clips after transitions. Aborting video generation.")
+                        logger.warning(f"No audio for scene {i+1}, video will be silent.")
+                    clips.append(clip)
+                else:
+                    logger.warning(f"No 'rendered' key in scene {i+1}, skipping.")
+            # Defensive: filter out None
+            clips = [c for c in clips if c is not None]
+            if not clips:
+                return None
+            # --- Compile video ---
+            from moviepy.editor import concatenate_videoclips, AudioFileClip, CompositeAudioClip
+            
+            def get_music_clip(music_file, music_url, music_volume, fallback_path=None):
+                """Robustly get a music clip from file, url, or fallback."""
+                import tempfile
+                from urllib.request import urlopen
+                try:
+                    if music_file and hasattr(music_file, 'read'):
+                        import traceback
+                        # Save uploaded file to disk, rewind if needed
+                        try:
+                            music_file.seek(0)
+                        except Exception:
+                            pass
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp:
+                            data = music_file.read()
+                            tmp.write(data)
+                            music_path = tmp.name
+                        return AudioFileClip(music_path).volumex(5.0)
+                    elif music_url:
+                        with urlopen(music_url) as response, tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp:
+                            tmp.write(response.read())
+                            music_path = tmp.name
+                        return AudioFileClip(music_path).volumex(5.0)
+                    elif fallback_path and os.path.exists(fallback_path):
+                        return AudioFileClip(fallback_path).volumex(5.0)
+                    else:
+                        logger.warning("No background music provided or found.")
+                        return None
+                except Exception as e:
+                    import traceback
+                    logger.error(f"Failed to load music: {e}\n{traceback.format_exc()}")
                     return None
-                final_clip = concatenate_videoclips(flat_clips, method="compose")
-            else:
-                print(f"[DIAG] transitioned_clips is not a list, type: {type(transitioned_clips)}")
-                final_clip = transitioned_clips
-            # Ensure output directory exists before writing
-            os.makedirs(self.config.output_dir, exist_ok=True)
-            # Generate output path
+
+            final_clip = concatenate_videoclips(clips, method='compose')
+            # --- Add background music ---
+            if music_config:
+                fallback_music = music_config.get('fallback')  # Optional: set fallback path in config
+                if music_config.get('mode') == 'global':
+                    music = music_config.get('music')
+                    music_volume = music.get('volume', 0.1) if music else 0.1
+                    music_file = music.get('file') if music else None
+                    music_url = music.get('url') if music else None
+                    music_clip = get_music_clip(music_file, music_url, music_volume, fallback_music)
+                    if music_clip:
+                        from moviepy.audio.fx.all import audio_loop
+                        music_clip = music_clip.fx(audio_loop, duration=final_clip.duration).subclip(0, final_clip.duration)
+                        if final_clip.audio:
+                            from moviepy.editor import CompositeAudioClip
+                            scene_audio = final_clip.audio.volumex(0.3)
+                            final_audio = CompositeAudioClip([scene_audio, music_clip])
+                        else:
+                            final_audio = music_clip
+                        final_clip = final_clip.set_audio(final_audio)
+                elif music_config.get('mode') == 'per_scene':
+                    per_scene_music = music_config.get('music', [])
+                    fallback_music = music_config.get('fallback')  # Optional
+                    for idx, music in enumerate(per_scene_music):
+                        if not music:
+                            continue
+                        music_file = music.get('file')
+                        music_url = music.get('url')
+                        music_volume = music.get('volume', 0.1)
+                        music_clip = get_music_clip(music_file, music_url, music_volume, fallback_music)
+                        if music_clip and idx < len(clips):
+                            from moviepy.audio.fx.all import audio_loop
+                            music_clip = music_clip.fx(audio_loop, duration=clips[idx].duration).subclip(0, clips[idx].duration)
+                            if clips[idx].audio:
+                                scene_audio = clips[idx].audio.volumex(0.3)
+                                clips[idx] = clips[idx].set_audio(CompositeAudioClip([scene_audio, music_clip]))
+                            else:
+                                clips[idx] = clips[idx].set_audio(music_clip)
             import time
             timestamp = int(time.time())
-            style_name = style.get('name', 'default') if style else 'default'
-            output_path = os.path.join(
-                self.config.output_dir,
-                f"video_{style_name}_{timestamp}.mp4"
-            )
-            print(f"[DIAG] Type of final_clip before write_videofile: {type(final_clip)}")
-            print(f"[DIAG] final_clip: {final_clip}")
-            if isinstance(final_clip, list):
-                print("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
-                logger.error("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
-                return None
+            output_path = f"output_manager/videos/video_default_{timestamp}.mp4"
+            # Determine logger for MoviePy
+            class StreamlitProglogLogger(ProgressBarLogger):
+                def __init__(self, st_progress_bar):
+                    super().__init__()
+                    self.st_progress_bar = st_progress_bar
+                def callback(self, **changes):
+                    if 'progress' in changes:
+                        percent = changes['progress']
+                        percent = max(0.0, min(1.0, percent))
+                        print(f"[DIAG] StreamlitProglogLogger percent: {percent}", flush=True)
+                        try:
+                            # If st_progress_bar is a function (circle), call it, else use .progress
+                            if callable(self.st_progress_bar):
+                                print(f"[DIAG] Calling st_progress_bar as function with {percent}", flush=True)
+                                self.st_progress_bar(percent)
+                            else:
+                                print(f"[DIAG] Calling st_progress_bar.progress({percent})", flush=True)
+                                self.st_progress_bar.progress(percent, text=f"Rendering video... {int(percent*100)}%")
+                        except Exception as e:
+                            print(f"[ERROR] Exception updating progress bar: {e}", flush=True)
+
+            class TerminalPercentageLogger(ProgressBarLogger):
+                def callback(self, **changes):
+                    print("[DIAG] TerminalPercentageLogger callback called with:", changes, flush=True)
+                    if 'progress' in changes:
+                        percent = changes['progress']
+                        print(f"[DIAG] TerminalPercentageLogger percent: {percent}", flush=True)
+                        percent_int = int(percent * 100)
+                        print(f"[PROGRESS] {percent_int}% finished", flush=True)
+
+            print(f"[DIAG] additional_settings before logger selection: {additional_settings}", flush=True)
+            logger_bar = None
+            if 'streamlit_logger' in additional_settings and additional_settings['streamlit_logger'] is not None:
+                print(f"[DIAG] Using StreamlitProglogLogger for UI progress bar, type: {type(additional_settings['streamlit_logger'])}", flush=True)
+                logger_bar = StreamlitProglogLogger(additional_settings['streamlit_logger'])
+            elif logger is not None:
+                print("[DIAG] Using provided logger", flush=True)
+                logger_bar = logger
+            else:
+                # DIRECT FIX: Force Streamlit progress if available
+                try:
+                    import streamlit as st
+                    print("[DIAG] EMERGENCY FIX: Creating Streamlit progress bar directly in video_logic.py", flush=True)
+                    progress_bar = st.progress(0, text="Video rendering...")
+                    logger_bar = StreamlitProglogLogger(progress_bar)
+                    print("[DIAG] Emergency Streamlit progress bar created successfully", flush=True)
+                except Exception as e:
+                    print(f"[DIAG] Emergency Streamlit progress bar failed: {e}", flush=True)
+                    print("[DIAG] Using TerminalPercentageLogger for terminal progress", flush=True)
+                    logger_bar = TerminalPercentageLogger()
+            # TEST: Call logger_bar.callback with fake progress before write_videofile
+            try:
+                print("[DIAG] Calling logger_bar.callback with fake progress=0.42", flush=True)
+                logger_bar.callback(progress=0.42)
+            except Exception as e:
+                print(f"[ERROR] Exception calling logger_bar.callback: {e}", flush=True)
             final_clip.write_videofile(
                 output_path,
-                codec='libx264',
-                audio_codec='aac',
+                codec="libx264",
+                audio_codec="aac",
+                temp_audiofile=f"output_manager/videos/tmp_audio_{timestamp}.m4a",
+                remove_temp=True,
+                threads=1,
+                logger=logger_bar,
                 fps=24
             )
+            # Progress: after video writing
+            if logger is not None:
+                try:
+                    logger(100)
+                except Exception:
+                    pass
             return output_path
-            
         except Exception as e:
-            logger.error(f"Error processing video: {e}")
+            if hasattr(logger, 'error'):
+                logger.error(f"Error in process_video: {e}")
+            elif callable(logger):
+                logger(f"Error in process_video: {e}")
+            else:
+                print(f"[ERROR] Error in process_video: {e}")
             return None
 
 # TODO: Add integration tests for full video generation pipeline.

@@ -139,7 +139,7 @@ sources:
     orientation: landscape
     size: large
   pixabay:
-    api_key: YOUR_PIXABAY_API_KEY
+    api_key: REPLACE_WITH_YOUR_PIXABAY_API_KEY
     category: ''
     enabled: true
     image_type: photo
@@ -162,7 +162,7 @@ text_processing:
   language_detection: true
   sentiment_analysis: true
 tts:
-  language: en
+  language: ur
   speed: 1.0
 video:
   debug_mode: true

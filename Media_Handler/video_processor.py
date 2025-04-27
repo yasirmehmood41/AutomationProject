@@ -143,14 +143,6 @@ class VideoStyle:
             return styles['modern']
         return styles[style_name]
 
-class StreamlitProglogLogger(ProgressBarLogger):
-    def __init__(self, get_bar):
-        super().__init__()
-        self.get_bar = get_bar
-    def callback(self, **changes):
-        if 'progress' in changes:
-            self.get_bar().progress(min(max(int(changes['progress'] * 100), 0), 100))
-
 class VideoProcessor:
     """Video processor for generating video content.
     
@@ -208,6 +200,21 @@ class VideoProcessor:
             logger.error(f"Error creating text image: {e}")
             raise
     
+    def _create_text_clip(self, text: str, style: VideoStyle, duration: float, y_pos: int = None) -> ImageClip:
+        """Create a text clip using PIL fallback, returns an ImageClip for MoviePy."""
+        try:
+            text_array = self.create_text_image(text, style)
+            text_clip = ImageClip(text_array)
+            text_clip = text_clip.set_duration(duration)
+            if y_pos is not None:
+                text_clip = text_clip.set_position(('center', y_pos))
+            else:
+                text_clip = text_clip.set_position('center')
+            return text_clip
+        except Exception as e:
+            logger.error(f"Error in _create_text_clip: {e}")
+            raise
+
     def _process_scene_metadata(self, scene: Dict) -> Dict:
         """Process scene metadata to extract useful information for video generation.
         
@@ -338,20 +345,28 @@ class VideoProcessor:
         try:
             duration = scene.get('duration', 5)
             print(f"[DIAG] Scene duration: {duration}")
+            # --- Ensure scene duration >= audio duration ---
+            if audio_path and os.path.exists(audio_path):
+                try:
+                    from moviepy.editor import AudioFileClip
+                    audio_clip = AudioFileClip(audio_path)
+                    audio_duration = audio_clip.duration
+                    if duration < audio_duration:
+                        print(f"[DIAG] Adjusting scene {scene.get('scene_number','?')} duration from {duration} to audio duration {audio_duration}")
+                        duration = audio_duration
+                        scene['duration'] = audio_duration
+                    audio_clip.close()
+                except Exception as e:
+                    print(f"[DIAG] Could not check audio duration for scene {scene.get('scene_number','?')}: {e}")
             # Create background (either image or color)
             bg_clip = self._create_background_clip(scene, style, duration)
             print(f"[DIAG] Background clip type: {type(bg_clip)}")
             clips = [bg_clip]
             # Add text elements
             text_elements = scene.get('text', '').split('\n')
-            print(f"[DIAG] Text elements: {text_elements}")
-            for j, text in enumerate(text_elements):
-                if not text.strip():
-                    continue
-                try:
-                    y_pos = style.text_margin + (j * (style.font_size + 10))
-                    print(f"[DIAG] Adding TextClip: '{text}' at y={y_pos}")
-                    text_clip = TextClip(
+            for i, text in enumerate(text_elements):
+                if text.strip():
+                    txt_clip = TextClip(
                         text,
                         fontsize=style.font_size,
                         color=style.text_color,
@@ -359,47 +374,11 @@ class VideoProcessor:
                         size=style.resolution,
                         method='caption',
                         align='center'
-                    )
-                    text_clip = text_clip.set_duration(duration)
-                    text_clip = text_clip.set_position(('center', y_pos))
-                    clips.append(text_clip)
-                except Exception as e:
-                    print(f"[DIAG] Error creating TextClip: {e}")
-                    logger.warning(f"Error creating text clip, trying PIL alternative: {e}")
-                    try:
-                        text_array = self.create_text_image(text, style)
-                        pil_text_clip = ImageClip(text_array)
-                        pil_text_clip = pil_text_clip.set_duration(duration)
-                        pil_text_clip = pil_text_clip.set_position(('center', y_pos))
-                        clips.append(pil_text_clip)
-                    except Exception as e2:
-                        print(f"[DIAG] Error with PIL alternative: {e2}")
-                        logger.error(f"Error with PIL alternative: {e2}")
-                        continue
-            print(f"[DIAG] All overlay clips: {clips}")
-            # Create scene clip
-            scene_clip = CompositeVideoClip(clips, size=style.resolution)
-            scene_clip = scene_clip.set_duration(duration)
-            print(f"[DIAG] Created CompositeVideoClip for scene {scene.get('scene_number', '?')}")
-            # Add audio if available
-            if audio_path:
-                print(f"[DIAG] audio_path provided: {audio_path}")
-                if os.path.exists(audio_path):
-                    print(f"[DIAG] audio file exists: {audio_path}")
-                    try:
-                        audio = AudioFileClip(audio_path)
-                        scene_clip = scene_clip.set_audio(audio)
-                        print(f"[DIAG] Audio attached to scene {scene.get('scene_number', '?')}")
-                    except Exception as e:
-                        print(f"[DIAG] Error adding audio: {e}")
-                        logger.error(f"Error adding audio to scene: {e}")
-                else:
-                    print(f"[DIAG] audio file does NOT exist: {audio_path}")
-            else:
-                print(f"[DIAG] No audio_path provided for scene {scene.get('scene_number', '?')}")
-            # Apply transition if specified in scene
+                    ).set_duration(duration)
+                    clips.append(txt_clip)
+            # Compose scene
+            scene_clip = CompositeVideoClip(clips, size=style.resolution).set_duration(duration)
             transition = scene.get('transition', 'fade')
-            print(f"[DIAG] Transition type: {transition}")
             if transition == 'fade':
                 # Add fade in/out
                 fade_duration = min(0.5, duration / 4)
@@ -446,6 +425,17 @@ class VideoProcessor:
                 allowed_fields = {'scene_number', 'background', 'script', 'duration', 'transition'}
                 scene_for_clip = {k: v for k, v in scene.items() if k in allowed_fields}
                 scene_for_clip['text'] = narration
+                # --- Overlay Metadata ---
+                # Get overlay info from config/session or scene meta
+                meta = self.config.get('meta', {})
+                overlay_title = meta.get('title', '')
+                overlay_author = meta.get('author', '')
+                overlay_logo_bytes = meta.get('logo_bytes', None)
+                overlay_slogan = meta.get('slogan', None)
+                overlay_color = meta.get('overlay_color', None)
+                overlay_watermark_bytes = meta.get('watermark_bytes', None)
+                overlay_animate = meta.get('animate', False)
+                # ---
                 if narration:
                     try:
                         audio_hash = str(hash(narration + str(i)))
@@ -474,11 +464,24 @@ class VideoProcessor:
                 if narration.lower().startswith(('show ', 'display ', 'background', 'visual')) or len(narration) > 220:
                     print(f"[WARN] Scene {i+1} narration may contain background/visual description. Please check your script field.")
                 try:
-                    clip = self._process_scene(
+                    # --- Use render_scene_with_overlay for every scene ---
+                    from Media_Handler.scene_renderer import SceneRenderer
+                    renderer = SceneRenderer(style.resolution, font=style.font, default_font_size=style.font_size)
+                    duration = scene.get('duration', 5)
+                    clip = renderer.render_scene_with_overlay(
                         scene_for_clip,
-                        style,
-                        audio_path=scene_audio
+                        duration,
+                        overlay_title,
+                        overlay_author,
+                        overlay_logo_bytes,
+                        overlay_slogan,
+                        overlay_color,
+                        overlay_watermark_bytes,
+                        overlay_animate
                     )
+                    # Add audio if available
+                    if clip and scene_audio:
+                        clip = clip.set_audio(AudioFileClip(scene_audio))
                     print(f"[DIAG] scene {i} clip: {clip}, type: {type(clip)}")
                     if clip:
                         clips.append(clip)
@@ -512,23 +515,253 @@ class VideoProcessor:
             timestamp = int(time.time())
             output_path = output_name or f"{style_name}_{timestamp}.mp4"
             print(f"[DIAG] About to write video file. final_clip type: {type(final_clip)}")
-            final_clip.write_videofile(
-                output_path,
-                codec='libx264',
-                audio_codec='aac',
-                fps=24
+            # --- At the end, call the actual export logic and pass logger ---
+            from Media_Handler.video_logic import VideoLogic
+            video_logic_handler = VideoLogic(self.config)
+            return video_logic_handler.process_video(
+                scenes,
+                audio_files,
+                style=style_name,
+                music_config=None,
+                logger=None,
+                subtitle_position='center',
+                overlay_title=overlay_title if 'overlay_title' in locals() else '',
+                overlay_author=overlay_author if 'overlay_author' in locals() else '',
+                overlay_logo_bytes=None,  # Remove DIAG print for logo
+                overlay_slogan=overlay_slogan if 'overlay_slogan' in locals() else None,
+                overlay_color=overlay_color if 'overlay_color' in locals() else None,
+                overlay_watermark_bytes=overlay_watermark_bytes if 'overlay_watermark_bytes' in locals() else None,
+                overlay_animate=overlay_animate if 'overlay_animate' in locals() else False,
+                additional_settings=additional_settings
             )
-            print(f"[DIAG] Video written successfully to {output_path}")
-            print(f"[DIAG] Returning output_path: {output_path}")
-            return output_path
         except Exception as e:
             print(f"[DIAG] Error in process_video: {e}")
             logger.error(f"Error in process_video: {e}")
             return None
 
     def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None):
-        print("[DIAG] video_processor.compile_video called")
-        return self.process_video(scenes, audio_files, style_name, additional_settings, output_name)
+        print("[DIAG] video_processor.compile_video called with additional_settings:", additional_settings, flush=True)
+        result = self.process_video(scenes, audio_files, style_name, additional_settings, output_name)
+        print("[DIAG] video_processor.compile_video done", flush=True)
+        return result
+
+    def create_preview(self, scenes: List[Dict], style_name: str = "modern") -> Optional[str]:
+        """Create a preview image grid for the video.
+        
+        Args:
+            scenes: List of scene data
+            style_name: Name of the video style
+            
+        Returns:
+            Path to preview image grid
+        """
+        if not scenes or not self.image_generator:
+            return None
+            
+        try:
+            # Generate preview images for each scene
+            preview_images = []
+            for scene in scenes[:min(len(scenes), 6)]:  # Limit to 6 scenes
+                image_path = self._generate_scene_image(scene, style_name)
+                if image_path and os.path.exists(image_path):
+                    preview_images.append(image_path)
+            
+            if not preview_images:
+                return None
+                
+            # Create a grid of preview images
+            grid_size = (3, 2)  # 3x2 grid
+            cell_size = (640, 360)  # 16:9 aspect ratio
+            
+            # Create a new image for the grid
+            grid_img = Image.new('RGB', 
+                                (cell_size[0] * grid_size[0], 
+                                 cell_size[1] * grid_size[1]))
+            
+            # Place each preview image in the grid
+            for i, img_path in enumerate(preview_images):
+                if i >= grid_size[0] * grid_size[1]:
+                    break
+                    
+                x = (i % grid_size[0]) * cell_size[0]
+                y = (i // grid_size[0]) * cell_size[1]
+                
+                try:
+                    img = Image.open(img_path)
+                    img = img.resize(cell_size)
+                    grid_img.paste(img, (x, y))
+                except Exception as e:
+                    logger.error(f"Error adding image to preview grid: {e}")
+            
+            # Save the grid image
+            timestamp = int(time.time())
+            output_path = os.path.join(
+                self.output_dir, 
+                f"preview_{style_name}_{timestamp}.jpg"
+            )
+            grid_img.save(output_path, quality=90)
+            
+            return output_path
+            
+        except Exception as e:
+            logger.error(f"Error creating preview: {e}")
+            return None
+
+# TODO: Review and complete all method implementations. Add robust error handling and logging for all file operations and external calls.
+
+    def process_video(
+        self,
+        scenes: List[Dict],
+        audio_files: Optional[Union[str, List[str]]] = None,
+        style_name: Optional[str] = "modern",
+        additional_settings: Optional[Dict[str, Any]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        print("[DIAG] video_processor.process_video called")
+        try:
+            if not scenes:
+                print("[DIAG] No scenes provided for video generation. Returning None.")
+                st.error("No scenes provided for video generation. Please add scenes and try again.")
+                return None
+            print(f"[DIAG] scenes: {scenes}")
+            style = VideoStyle.get_style(style_name)
+            print(f"[DIAG] Using style: {style}")
+            clips = []
+            voice_system = None
+            try:
+                from Media_Handler.voice_system import VoiceSystem
+                voice_system = VoiceSystem()
+                print("[DIAG] VoiceSystem instantiated for TTS.")
+            except Exception as e:
+                print(f"[DIAG] ERROR: Could not import or instantiate VoiceSystem: {e}")
+                logger.error(f"Could not import or instantiate VoiceSystem: {e}")
+            for i, scene in enumerate(scenes):
+                scene_audio = None
+                # Always use ONLY 'script' for narration/subtitles/overlay
+                narration = scene.get('script', '').strip()
+                # Remove all legacy/extra fields from scene_for_clip except allowed
+                allowed_fields = {'scene_number', 'background', 'script', 'duration', 'transition'}
+                scene_for_clip = {k: v for k, v in scene.items() if k in allowed_fields}
+                scene_for_clip['text'] = narration
+                # --- Overlay Metadata ---
+                # Get overlay info from config/session or scene meta
+                meta = self.config.get('meta', {})
+                overlay_title = meta.get('title', '')
+                overlay_author = meta.get('author', '')
+                overlay_logo_bytes = meta.get('logo_bytes', None)
+                overlay_slogan = meta.get('slogan', None)
+                overlay_color = meta.get('overlay_color', None)
+                overlay_watermark_bytes = meta.get('watermark_bytes', None)
+                overlay_animate = meta.get('animate', False)
+                # ---
+                if narration:
+                    try:
+                        audio_hash = str(hash(narration + str(i)))
+                        output_dir = os.path.join('.', 'Output_Manager', 'outputs')
+                        os.makedirs(output_dir, exist_ok=True)
+                        output_file = os.path.join(output_dir, f'voice_scene_{i+1}_{audio_hash}.mp3')
+                        if not os.path.exists(output_file):
+                            from gtts import gTTS
+                            config = voice_system.config if hasattr(voice_system, 'config') else {}
+                            tts_config = config.get('tts', {}) if config else {}
+                            language = tts_config.get('language', 'en')
+                            speed = float(tts_config.get('speed', 1.0))
+                            slow = True if speed != 1.0 else False
+                            tts = gTTS(text=narration, lang=language, slow=slow)
+                            tts.save(output_file)
+                        scene_audio = os.path.abspath(output_file)
+                        print(f"[DIAG] Generated audio for scene {i+1}: {scene_audio}")
+                    except Exception as e:
+                        print(f"[DIAG] Error generating audio for scene {i+1}: {e}")
+                        logger.error(f"Error generating audio for scene {i+1}: {e}")
+                # Warn if legacy/extra fields exist
+                for legacy in ['text', 'content', 'title', 'subtitle', 'narration']:
+                    if legacy in scene and legacy != 'script':
+                        logger.warning(f"Scene {i+1} contains legacy field '{legacy}'. It will be ignored for overlays/subtitles.")
+                # Backend warning for likely background description
+                if narration.lower().startswith(('show ', 'display ', 'background', 'visual')) or len(narration) > 220:
+                    print(f"[WARN] Scene {i+1} narration may contain background/visual description. Please check your script field.")
+                try:
+                    # --- Use render_scene_with_overlay for every scene ---
+                    from Media_Handler.scene_renderer import SceneRenderer
+                    renderer = SceneRenderer(style.resolution, font=style.font, default_font_size=style.font_size)
+                    duration = scene.get('duration', 5)
+                    clip = renderer.render_scene_with_overlay(
+                        scene_for_clip,
+                        duration,
+                        overlay_title,
+                        overlay_author,
+                        overlay_logo_bytes,
+                        overlay_slogan,
+                        overlay_color,
+                        overlay_watermark_bytes,
+                        overlay_animate
+                    )
+                    # Add audio if available
+                    if clip and scene_audio:
+                        clip = clip.set_audio(AudioFileClip(scene_audio))
+                    print(f"[DIAG] scene {i} clip: {clip}, type: {type(clip)}")
+                    if clip:
+                        clips.append(clip)
+                    else:
+                        print(f"[DIAG] Failed to create clip for scene {i}")
+                except Exception as e:
+                    print(f"[DIAG] Exception processing scene {i}: {e}")
+            print(f"[DIAG] All clips: {clips}")
+            print(f"[DIAG] Types in clips: {[type(c) for c in clips]}")
+            # Defensive: filter out None
+            clips = [c for c in clips if c is not None]
+            if not clips:
+                print("[DIAG] No valid clips to compile. Returning None.")
+                return None
+            print("[DIAG] About to call apply_transitions")
+            try:
+                from Media_Handler.transitions import TransitionManager
+                transition_manager = TransitionManager()
+            except Exception as e:
+                print(f"[DIAG] ERROR: Could not import or instantiate TransitionManager: {e}")
+                logger.error(f"Could not import or instantiate TransitionManager: {e}")
+                return None
+            final_clip = transition_manager.apply_transitions(clips, transition_type="fade")
+            print(f"[DIAG] final_clip after transitions: {final_clip}, type: {type(final_clip)}")
+            if isinstance(final_clip, list):
+                print("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
+                logger.error("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
+                return None
+            # Generate output path
+            import time
+            timestamp = int(time.time())
+            output_path = output_name or f"{style_name}_{timestamp}.mp4"
+            print(f"[DIAG] About to write video file. final_clip type: {type(final_clip)}")
+            # --- At the end, call the actual export logic and pass logger ---
+            from Media_Handler.video_logic import VideoLogic
+            video_logic_handler = VideoLogic(self.config)
+            return video_logic_handler.process_video(
+                scenes,
+                audio_files,
+                style=style_name,
+                music_config=None,
+                logger=None,
+                subtitle_position='center',
+                overlay_title=overlay_title if 'overlay_title' in locals() else '',
+                overlay_author=overlay_author if 'overlay_author' in locals() else '',
+                overlay_logo_bytes=None,  # Remove DIAG print for logo
+                overlay_slogan=overlay_slogan if 'overlay_slogan' in locals() else None,
+                overlay_color=overlay_color if 'overlay_color' in locals() else None,
+                overlay_watermark_bytes=overlay_watermark_bytes if 'overlay_watermark_bytes' in locals() else None,
+                overlay_animate=overlay_animate if 'overlay_animate' in locals() else False,
+                additional_settings=additional_settings
+            )
+        except Exception as e:
+            print(f"[DIAG] Error in process_video: {e}")
+            logger.error(f"Error in process_video: {e}")
+            return None
+
+    def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None):
+        print("[DIAG] video_processor.compile_video called with additional_settings:", additional_settings, flush=True)
+        result = self.process_video(scenes, audio_files, style_name, additional_settings, output_name)
+        print("[DIAG] video_processor.compile_video done", flush=True)
+        return result
 
     def create_preview(self, scenes: List[Dict], style_name: str = "modern") -> Optional[str]:
         """Create a preview image grid for the video.
