@@ -279,7 +279,13 @@ class VoiceSystem:
         print(f"[DIAG] VoiceSystem.generate_voice called with text='{text[:30]}...' voice_id={voice_id}")
         try:
             config = load_config()
+            if not isinstance(config, dict):
+                logger.error(f"Loaded config is not a dict (type={type(config)}): {config}")
+                config = {}
             tts_config = config.get('tts', {}) if config else {}
+            if not isinstance(tts_config, dict):
+                logger.error(f"tts_config is not a dict (type={type(tts_config)}): {tts_config}")
+                tts_config = {}
             language = tts_config.get('language', 'en')
             speed = float(tts_config.get('speed', 1.0))
             slow = True if speed != 1.0 else False

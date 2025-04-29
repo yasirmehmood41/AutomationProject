@@ -4,6 +4,7 @@ import time
 import os
 import threading
 import json
+import tempfile
 os.environ["IMAGEMAGICK_BINARY"] = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
 
 import streamlit as st
@@ -99,6 +100,9 @@ def scene_editor(scenes):
             bg_val = st.session_state[bg_key]
         else:
             bg_val = scene.get('background', '')
+        # Defensive: ensure background is always a dict for downstream usage
+        if not isinstance(bg_val, dict):
+            bg_val = {}
         if subtitle_pos_key in st.session_state:
             subtitle_pos = st.session_state[subtitle_pos_key]
         else:
@@ -557,7 +561,8 @@ def process_video_generation(
     scenes: List[Dict], 
     video_processor: VideoProcessor,
     video_logic_handler: VideoLogic,
-    style_config: Dict = None
+    style_config: Dict = None,
+    background_music_path: Optional[str] = None
 ) -> None:
     # Avoid printing raw bytes in scenes
     def summarize_scene(scene):
@@ -584,7 +589,8 @@ def process_video_generation(
     status_text = st.empty()
     
     try:
-        with st.spinner("Generating your video..."):
+        with st.spinner("Generating your video. This may take a minute..."):
+            print("[DIAG] Spinner shown. Entering export block.")
             # Phase 1: Scene Processing
             status_text.markdown("**Processing scenes...**")
             processed_scenes = []
@@ -619,6 +625,30 @@ def process_video_generation(
                 # Use this music_arg as the background music in video generation logic
                 pass  # (existing logic should already use this variable)
             
+            # Ensure additional_settings is always defined before use
+            additional_settings = {}
+            if background_music_path:
+                additional_settings['background_music_path'] = background_music_path
+                print(f"[DIAG] FINAL additional_settings includes background_music_path: {background_music_path}")
+            # Merge style_settings and any previously set keys (like background_music_path)
+            style_settings = {
+                "base_style": style_config.get("base_style", "modern"),
+                "font": style_config.get("font", "Arial"),
+                "font_size": style_config.get("font_size", 36),
+                "color": style_config.get("color", "#FFFFFF"),
+                "background_color": style_config.get("background_color", "#000000"),
+                "aspect_ratio": style_config.get("aspect_ratio", "16:9"),
+                "resolution": style_config.get("resolution", (1920, 1080)),
+                "fps": style_config.get("fps", 30),
+                "bitrate": style_config.get("bitrate", "8M"),
+                "use_intro": style_config.get("use_intro", False),
+                "use_outro": style_config.get("use_outro", False),
+                "use_logo": style_config.get("use_logo", False),
+                "color_scheme": style_config.get("color_scheme", "blue-white"),
+                "transition": style_config.get("transition", "fade"),
+                "video_quality": style_config.get("video_quality", "FHD")
+            }
+            additional_settings = {**style_settings, **additional_settings}
             for i, scene in enumerate(scenes):
                 processed = video_logic_handler.process_scene(
                     scene, 
@@ -637,7 +667,7 @@ def process_video_generation(
 
             # --- CREATE A SINGLE DICT WITH EVERYTHING ---
             # Convert style_config to a proper style dictionary with all settings
-            additional_settings = {
+            style_settings = {
                 "base_style": style_config.get("base_style", "modern"),
                 "font": style_config.get("font", "Arial"),
                 "font_size": style_config.get("font_size", 36),
@@ -647,14 +677,15 @@ def process_video_generation(
                 "resolution": style_config.get("resolution", (1920, 1080)),
                 "fps": style_config.get("fps", 30),
                 "bitrate": style_config.get("bitrate", "8M"),
-                "use_intro": style_config.get("use_intro", False),
-                "use_outro": style_config.get("use_outro", False),
-                "use_logo": style_config.get("use_logo", False),
+                "use_intro": st.checkbox("Include Intro Video (if available)", value=False),
+                "use_outro": st.checkbox("Include Outro Video (if available)", value=False),
+                "use_logo": st.checkbox("Include Logo Overlay (if available)", value=False),
                 "color_scheme": style_config.get("color_scheme", "blue-white"),
                 "transition": style_config.get("transition", "fade"),
                 "video_quality": style_config.get("video_quality", "FHD")
             }
-            
+            # Merge style_settings and any previously set keys (like background_music_path)
+            additional_settings = {**style_settings, **additional_settings}
             # Force set the streamlit logger
             if progress_bar_type == "Circle":
                 import streamlit.components.v1 as components
@@ -698,35 +729,29 @@ def process_video_generation(
                     st.experimental_js("setCircleProgress", percent)
                 additional_settings["streamlit_logger"] = set_circle_progress
             else:
-                video_progress_bar = st.progress(0, text="Rendering video...")
+                video_progress_bar = st.progress(0.0)
                 additional_settings["streamlit_logger"] = video_progress_bar
             
             print("[DIAG] FINAL additional_settings before compile_video:", additional_settings, flush=True)
             
-            # Run video export synchronously with the combined settings
+            # Run video export synchronously with live progress bar
+            logger = StreamlitProglogLogger(progress_key='video_progress')
             output_file = video_processor.compile_video(
                 processed_scenes,
                 None,
                 style_config.get('base_style', 'video'),
                 additional_settings,  # Pass the combined dict with streamlit_logger
-                f"{style_config.get('base_style', 'video')}_{int(time.time())}.mp4"
+                None,
+                logger=logger
             )
             progress_placeholder.empty()
-            
+            st.session_state['last_generated_video'] = output_file
+            print(f"[DIAG] Export complete. output_file={output_file}")
             # Display completion message and video
-            retry_count = 0
-            max_retries = 5
-            retry_delay = 1  # seconds
-            while output_file and not os.path.exists(output_file) and retry_count < max_retries:
-                time.sleep(retry_delay)
-                retry_count += 1
-
-            output_dir = os.path.dirname(output_file) if output_file else None
             if output_file and os.path.exists(output_file):
-                st.session_state['last_generated_video'] = output_file
+                print(f"[DIAG] Video file exists. Displaying preview and download. Path: {output_file}")
                 st.success(f"\U0001F389 Your video has been successfully generated!\n\nSaved at: {output_file}")
-                st.video(output_file)
-                # Add download button
+                st.video(output_file, format="video/mp4", start_time=0)
                 with open(output_file, "rb") as file:
                     st.download_button(
                         label="Download Video",
@@ -734,29 +759,9 @@ def process_video_generation(
                         file_name=os.path.basename(output_file),
                         mime="video/mp4"
                     )
-            elif output_dir and os.path.exists(output_dir):
-                # Fallback: show most recent video in output directory if exists
-                import glob
-                video_files = sorted(
-                    glob.glob(os.path.join(output_dir, '*.mp4')),
-                    key=os.path.getmtime,
-                    reverse=True
-                )
-                if video_files:
-                    latest_video = video_files[0]
-                    st.warning(f"Video not found at expected path, showing latest video in directory: {latest_video}")
-                    st.video(latest_video)
-                    with open(latest_video, "rb") as file:
-                        st.download_button(
-                            label="Download Latest Video",
-                            data=file,
-                            file_name=os.path.basename(latest_video),
-                            mime="video/mp4"
-                        )
-                else:
-                    st.error(f"Video generation completed, but the output file was not found.\nExpected directory: {output_dir}")
             else:
-                st.error("Video generation completed, but the output file was not found. Output directory does not exist.")
+                print(f"[DIAG] Video generation completed, but the output file was not found: {output_file}")
+                st.error("Video generation completed, but the output file was not found.")
                 
     except Exception as e:
         # print(f"[DIAG] Exception in process_video_generation: {e}")
@@ -768,6 +773,47 @@ def process_video_generation(
         progress_placeholder.empty()
         status_text.empty()
 
+# --- Add StreamlitProglogLogger for real-time progress ---
+from proglog import ProgressBarLogger
+import threading
+import time
+
+class StreamlitProglogLogger(ProgressBarLogger):
+    def __init__(self, progress_key='video_progress'):
+        super().__init__()
+        self.progress_key = progress_key
+    def callback(self, **changes):
+        if 'progress' in changes:
+            import streamlit as st
+            st.session_state[self.progress_key] = changes['progress']
+    
+    # Add standard logging methods
+    def warning(self, msg):
+        print(f"[STREAMLIT LOGGER] WARNING: {msg}")
+    
+    def error(self, msg):
+        print(f"[STREAMLIT LOGGER] ERROR: {msg}")
+    
+    def info(self, msg):
+        print(f"[STREAMLIT LOGGER] INFO: {msg}")
+    
+    def debug(self, msg):
+        print(f"[STREAMLIT LOGGER] DEBUG: {msg}")
+
+# --- Video export with real progress bar ---
+def run_export(video_processor, processed_scenes, style_config, additional_settings, output_file, progress_key):
+    logger = StreamlitProglogLogger(progress_key=progress_key)
+    # Call your actual MoviePy export here, passing logger
+    video_processor.compile_video(
+        processed_scenes,
+        None,
+        style_config.get('base_style', 'video'),
+        additional_settings,  # Pass the combined dict with streamlit_logger
+        output_file,
+        logger=logger
+    )
+
+# --- In your main Streamlit UI logic, before export ---
 def main() -> None:
     """Main application function."""
     st.title("🎬 Multi-Niche Video Generator")
@@ -1001,6 +1047,21 @@ def main() -> None:
         st.header("Step 3: Voice Over & Music")
         tts_lang, tts_speed = voice_and_style_selector_tts()
         music_config = music_selection_ui("global")
+        print(f"[DIAG] music_config returned: {music_config}")
+        # Save uploaded music file to disk and store path in session
+        if music_config and music_config.get('file') is not None:
+            uploaded_music_file = music_config['file']
+            music_save_path = None
+            if uploaded_music_file:
+                music_save_path = os.path.join(tempfile.gettempdir(), f"uploaded_bg_music_{int(time.time())}.mp3")
+                with open(music_save_path, "wb") as f:
+                    f.write(uploaded_music_file.read())
+                print(f"[DIAG] Saved uploaded background music to: {music_save_path}")
+                st.session_state['background_music_path'] = music_save_path
+            else:
+                print(f"[DIAG] No uploaded music file to save.")
+        else:
+            print(f"[DIAG] No music file in music_config.")
         if st.button("Save Voice & Music Config", key="save_voice_music"):
             st.session_state['music_config'] = music_config
             st.success("Voice & Music settings saved!")
@@ -1017,6 +1078,11 @@ def main() -> None:
     # Step 4: Video Generation
     elif step == 4:
         st.header("Step 4: Video Generation")
+        st.subheader("Step 4: Video Generation")
+        # Optional: Start Over button
+        if st.button("Start Over"):
+            st.session_state.clear()
+            st.experimental_rerun()
         style_name, style_config = style_selector(return_name=True)
         st.session_state['selected_style_name'] = style_name
         st.session_state['selected_style_config'] = style_config
@@ -1039,87 +1105,48 @@ def main() -> None:
                 st.rerun()
         with col2:
             if st.button("Generate Video", key="generate_video_btn_final"):
-                import tempfile
-                temp_video_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-                temp_video_path = temp_video_file.name
-                temp_video_file.close()
-                # --- Progress bar setup ---
-                progress_placeholder = st.empty()
-                percent_placeholder = st.empty()
-                def get_bar():
-                    return progress_placeholder
-                logger = None
-                # --- Video generation ---
-                try:
-                    video_path = video_logic_handler.process_video(
-                        scenes=scenes,
-                        audio_files=None,
-                        style=style_config,
-                        music_config=st.session_state.get('music_config', None),
-                        logger=logger,
-                        subtitle_position=subtitle_position,
-                        overlay_title=st.session_state.get('meta_title', ''),
-                        overlay_author=st.session_state.get('meta_author', ''),
-                        overlay_logo_bytes=st.session_state.get('meta_logo_bytes', None),
-                        overlay_slogan=st.session_state.get('meta_slogan', None),
-                        overlay_color=st.session_state.get('meta_overlay_color', None),
-                        overlay_watermark_bytes=st.session_state.get('meta_watermark_bytes', None),
-                        overlay_animate=st.session_state.get('meta_animate', False),
-                        additional_settings=style_config
-                    )
-                except TypeError:
-                    # Fallback: call with output_path only if supported
-                    video_path = video_processor.compile_video(
-                        scenes=scenes,
-                        audio_files=None,
-                        style_name=style_name,
-                        additional_settings=None,
-                        output_name=temp_video_path
-                    )
-                # No need to poll shared_progress; StreamlitProglogLogger updates progress directly
-                progress_placeholder.empty()
-                percent_placeholder.empty()
-                if video_path and os.path.exists(video_path):
-                    st.session_state['last_generated_video'] = video_path
-                    st.success("Video generated!")
+                print("[DIAG] Generate Video button clicked")
+                print(f"[DIAG] Additional settings at button click: {style_config}")
+                # --- Prepare additional_settings for video export ---
+                additional_settings = dict(style_config)
+                # Attach background music path if available
+                bg_music_path = st.session_state.get('background_music_path', None)
+                if bg_music_path:
+                    additional_settings['background_music_path'] = bg_music_path
+                    print(f"[DIAG] Passing background_music_path to export: {bg_music_path}")
                 else:
-                    st.error("Video generation failed. No output file found.")
-                st.rerun()
-        # Show video if available
-        def _schedule_temp_cleanup(path, delay=600):
-            def _delete():
-                time.sleep(delay)
-                try:
-                    if os.path.exists(path):
-                        os.remove(path)
-                except Exception:
-                    pass
-            threading.Thread(target=_delete, daemon=True).start()
-        # --- Warn user if they try to decrease scene duration below voice-over length ---
-        from moviepy.editor import AudioFileClip
-        scenes = st.session_state.get('scenes', [])
-        warnings = []
-        for scene in scenes:
-            audio_file = scene.get('audio_file')
-            if audio_file and os.path.exists(audio_file):
-                try:
-                    audio_clip = AudioFileClip(audio_file)
-                    audio_duration = audio_clip.duration
-                    if scene.get('duration', 0) < audio_duration:
-                        warnings.append(f"Scene {scene.get('scene_number','?')}: Duration increased to match voice-over length ({audio_duration:.2f}s). Cannot be set lower.")
-                    audio_clip.close()
-                except Exception:
-                    pass
-        if warnings:
-            for w in warnings:
-                st.warning(w)
-        if 'last_generated_video' in st.session_state and os.path.exists(st.session_state['last_generated_video']):
-            st.video(st.session_state['last_generated_video'])
-            with open(st.session_state['last_generated_video'], "rb") as f:
-                st.download_button("Download Video", f, file_name="generated_video.mp4")
-            # Schedule auto cleanup (delete temp file after 10 minutes)
-            _schedule_temp_cleanup(st.session_state['last_generated_video'], delay=600)
-
+                    print(f"[DIAG] No background_music_path in session_state at export.")
+                # --- Progress spinner for export ---
+                with st.spinner("Generating your video. This may take a minute..."):
+                    print("[DIAG] Spinner shown. Entering export block.")
+                    logger = StreamlitProglogLogger(progress_key='video_progress')
+                    output_file = video_processor.compile_video(
+                        scenes,
+                        None,
+                        style_config.get('base_style', 'video'),
+                        additional_settings,  # Pass the combined dict with streamlit_logger
+                        None,
+                        logger=logger
+                    )
+                    print(f"[DIAG] Export complete in spinner. output_file={output_file}")
+                st.session_state['last_generated_video'] = output_file
+                print(f"[DIAG] Export complete. output_file={output_file}")
+                # Display completion message and video
+                if output_file and os.path.exists(output_file):
+                    print(f"[DIAG] Video file exists. Displaying preview and download. Path: {output_file}")
+                    st.success(f"\U0001F389 Your video has been successfully generated!\n\nSaved at: {output_file}")
+                    st.video(output_file, format="video/mp4", start_time=0)
+                    with open(output_file, "rb") as file:
+                        st.download_button(
+                            label="Download Video",
+                            data=file,
+                            file_name=os.path.basename(output_file),
+                            mime="video/mp4"
+                        )
+                else:
+                    print(f"[DIAG] Video generation completed, but the output file was not found: {output_file}")
+                    st.error("Video generation completed, but the output file was not found.")
+                
 if __name__ == "__main__":
     def sanitize_scene(scene):
         scene_copy = dict(scene)

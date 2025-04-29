@@ -61,6 +61,14 @@ class VideoLogic:
         }
     
     def _init_scene_renderer(self, style: Dict) -> None:
+        # Defensive: ensure style is a dict
+        if isinstance(style, str):
+            from Media_Handler.video_processor import VideoStyle
+            style = VideoStyle.get_style(style)
+        if hasattr(style, '__dict__'):
+            style = dict(style.__dict__)
+        elif not isinstance(style, dict):
+            style = {}
         resolution = style.get('resolution', (1920, 1080))
         font = style.get('font', 'Arial')
         font_size = style.get('font_size', 36)
@@ -112,18 +120,34 @@ class VideoLogic:
         overlay_watermark_bytes = None,
         overlay_animate = False
     ) -> Optional[Dict]:
+        print(f"[DIAG] process_scene called with type(scene)={type(scene)}, scene={scene}")
+        if not isinstance(scene, dict):
+            logger.error(f"process_scene called with non-dict: {scene!r}")
+            return None
         try:
-            # Initialize scene renderer if needed
-            if not self.scene_renderer:
-                self._init_scene_renderer(style)
-            # Extract text for highlighting
+            # Defensive: ensure scene is a dict before .get
+            if not isinstance(scene, dict):
+                logger.error(f"process_scene: scene is not a dict (type={type(scene)}): {scene}")
+                return None
+            # Defensive: ensure all .get usage is on dict
             scene_text = scene.get('text', '')
+            if scene_text is None:
+                scene_text = scene.get('script', '')
+            if not isinstance(scene_text, str):
+                logger.error(f"scene['text'] or ['script'] is not a string (type={type(scene_text)}): {scene_text}")
+                scene_text = str(scene_text)
             highlighted_words = self._extract_highlighted_words(scene_text)
             rendered_scene = None
             try:
+                # Ensure scene_renderer is initialized
+                if self.scene_renderer is None:
+                    self._init_scene_renderer(style)
+                scene_subtitle_position = scene.get('subtitle_position') if isinstance(scene, dict) else None
+                if not scene_subtitle_position or scene_subtitle_position == '(use global)':
+                    scene_subtitle_position = subtitle_position
                 rendered_scene = self.scene_renderer.render_scene_with_overlay(
                     scene,
-                    scene.get('duration', 5.0),
+                    scene.get('duration', 5.0) if isinstance(scene, dict) else 5.0,
                     overlay_title,
                     overlay_author,
                     overlay_logo_bytes,
@@ -132,11 +156,14 @@ class VideoLogic:
                     overlay_watermark_bytes,
                     overlay_animate,
                     style,
-                    subtitle_position
+                    scene_subtitle_position
                 )
             except Exception as e:
-                logger.error(f"Rendering failed for scene {scene.get('scene_number', '?')}: {e}")
-                if self.config.debug_mode:
+                import traceback
+                logger.error(f"Rendering failed for scene {scene.get('scene_number', '?') if isinstance(scene, dict) else '?'}: {e}\n{traceback.format_exc()}")
+                print(f"Rendering failed for scene {scene.get('scene_number', '?') if isinstance(scene, dict) else '?'}: {e}")
+                traceback.print_exc()
+                if self.config.debug_mode and isinstance(scene, dict):
                     self.debug_data['rendering_errors'].append({
                         'scene': scene.get('scene_number', '?'),
                         'error': str(e)
@@ -148,11 +175,11 @@ class VideoLogic:
                     from moviepy.editor import AudioFileClip
                     audio_clip = AudioFileClip(audio_file)
                     audio_duration = audio_clip.duration
-                    if scene.get('duration', 0) < audio_duration:
+                    if isinstance(scene, dict) and scene.get('duration', 0) < audio_duration:
                         scene['duration'] = audio_duration
                     audio_clip.close()
                 except Exception as e:
-                    logger.error(f"Could not check audio duration for scene {scene.get('scene_number','?')}: {e}")
+                    logger.error(f"Could not check audio duration for scene {scene.get('scene_number','?') if isinstance(scene, dict) else '?'}: {e}")
             return {
                 **scene,
                 'rendered': rendered_scene,
@@ -160,7 +187,7 @@ class VideoLogic:
             }
         except Exception as e:
             logger.error(f"Error processing scene: {e}")
-            if self.config.debug_mode:
+            if self.config.debug_mode and isinstance(scene, dict):
                 self.debug_data['rendering_errors'].append({
                     'scene': scene.get('scene_number', '?'),
                     'error': str(e)
@@ -196,6 +223,10 @@ class VideoLogic:
             processed_scenes = []
             total = len(scenes)
             for idx, scene in enumerate(scenes):
+                if not isinstance(scene, dict):
+                    logger.error(f"Scene at index {idx} is not a dict: {scene!r}")
+                    continue
+                logger.debug(f"[DIAG] Calling process_scene for idx={idx}, type(scene)={type(scene)}, scene={scene}")
                 # --- Inject overlays into scene dict ---
                 scene['overlay_logo_bytes'] = overlay_logo_bytes
                 scene['overlay_title'] = overlay_title
@@ -214,9 +245,14 @@ class VideoLogic:
                     except Exception as e:
                         logger.error(f"TTS generation failed for scene {scene.get('scene_number','?')}: {e}")
                         audio_file = None
+                # Defensive: ensure audio_file is a valid path (applies to all cases)
+                if audio_file is not None and not (isinstance(audio_file, str) and os.path.isfile(audio_file)):
+                    logger.error(f"Audio file for scene {scene.get('scene_number', '?')} is invalid: {audio_file!r}")
+                    audio_file = None
                 # 3. Fallback: silent
                 if not audio_file:
                     logger.warning(f"No audio for scene {scene.get('scene_number','?')}, video will be silent.")
+                logger.debug(f"[DIAG] About to call process_scene with scene type: {type(scene)}, value: {scene}")
                 processed = self.process_scene(
                     scene,
                     style or {},

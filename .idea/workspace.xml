@@ -9,20 +9,9 @@
       <change beforePath="$PROJECT_DIR$/Media_Handler/scene_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/Media_Handler/scene_renderer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Media_Handler/video_logic.py" beforeDir="false" afterPath="$PROJECT_DIR$/Media_Handler/video_logic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Media_Handler/video_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Media_Handler/video_processor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Media_Handler/voice_system.py" beforeDir="false" afterPath="$PROJECT_DIR$/Media_Handler/voice_system.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Output_Manager/outputs/voice_sample.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/Output_Manager/outputs/voice_sample.mp3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/casual_1745212635.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/casual_1745214173.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/corporate_1744888093TEMP_MPY_wvf_snd.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/corporate_1745217867.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modern_1745127081.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modern_1745218984.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample script" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tech_1745054098.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tech_1745058313.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tech_1745061090.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tech_1745132381.mp4" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

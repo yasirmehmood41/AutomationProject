@@ -5,13 +5,14 @@ from typing import Dict, List, Optional, Tuple, Union, Any
 from dataclasses import dataclass
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import VideoFileClip, AudioFileClip, ColorClip, TextClip, CompositeVideoClip, concatenate_videoclips, ImageClip
+from moviepy.editor import VideoFileClip, ColorClip, TextClip, CompositeVideoClip, concatenate_videoclips, ImageClip
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from pathlib import Path
 from moviepy.video.io.ffmpeg_writer import ffmpeg_write_video
 from proglog import ProgressBarLogger
 import streamlit as st
+import tempfile
 
 # Try to import image generator
 try:
@@ -397,7 +398,8 @@ class VideoProcessor:
         audio_files: Optional[Union[str, List[str]]] = None,
         style_name: Optional[str] = "modern",
         additional_settings: Optional[Dict[str, Any]] = None,
-        output_name: Optional[str] = None
+        output_name: Optional[str] = None,
+        logger: Optional[logging.Logger] = None
     ) -> Optional[str]:
         print("[DIAG] video_processor.process_video called")
         try:
@@ -481,6 +483,7 @@ class VideoProcessor:
                     )
                     # Add audio if available
                     if clip and scene_audio:
+                        from moviepy.editor import AudioFileClip
                         clip = clip.set_audio(AudioFileClip(scene_audio))
                     print(f"[DIAG] scene {i} clip: {clip}, type: {type(clip)}")
                     if clip:
@@ -510,38 +513,63 @@ class VideoProcessor:
                 print("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
                 logger.error("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
                 return None
-            # Generate output path
-            import time
-            timestamp = int(time.time())
-            output_path = output_name or f"{style_name}_{timestamp}.mp4"
-            print(f"[DIAG] About to write video file. final_clip type: {type(final_clip)}")
-            # --- At the end, call the actual export logic and pass logger ---
-            from Media_Handler.video_logic import VideoLogic
-            video_logic_handler = VideoLogic(self.config)
-            return video_logic_handler.process_video(
-                scenes,
-                audio_files,
-                style=style_name,
-                music_config=None,
-                logger=None,
-                subtitle_position='center',
-                overlay_title=overlay_title if 'overlay_title' in locals() else '',
-                overlay_author=overlay_author if 'overlay_author' in locals() else '',
-                overlay_logo_bytes=None,  # Remove DIAG print for logo
-                overlay_slogan=overlay_slogan if 'overlay_slogan' in locals() else None,
-                overlay_color=overlay_color if 'overlay_color' in locals() else None,
-                overlay_watermark_bytes=overlay_watermark_bytes if 'overlay_watermark_bytes' in locals() else None,
-                overlay_animate=overlay_animate if 'overlay_animate' in locals() else False,
-                additional_settings=additional_settings
-            )
+            # --- Background Music Mixing ---
+            background_music_path = None
+            if additional_settings and 'background_music_path' in additional_settings:
+                background_music_path = additional_settings['background_music_path']
+                print(f"[DIAG] video_processor got background_music_path: {background_music_path}")
+            else:
+                print(f"[DIAG] video_processor got NO background_music_path")
+            final_audio = None
+            if background_music_path and os.path.exists(background_music_path):
+                try:
+                    print(f"[DIAG] Adding background music: {background_music_path}")
+                    from moviepy.editor import AudioFileClip, CompositeAudioClip
+                    music_clip = AudioFileClip(background_music_path).volumex(0.15)  # Lower volume for background
+                    if final_clip.audio:
+                        print(f"[DIAG] Video has narration audio. Mixing with background music.")
+                        final_audio = CompositeAudioClip([final_clip.audio, music_clip.set_duration(final_clip.duration)])
+                    else:
+                        print(f"[DIAG] Video has NO narration audio. Using only background music.")
+                        final_audio = music_clip.set_duration(final_clip.duration)
+                    final_clip = final_clip.set_audio(final_audio)
+                except Exception as e:
+                    print(f"[DIAG] Failed to add background music: {e}")
+            else:
+                print(f"[DIAG] No valid background music file found or path does not exist: {background_music_path}")
+            # --- End Background Music Mixing ---
+            # Clean up old temp video files (>5 min)
+            temp_dir = tempfile.gettempdir()
+            now = time.time()
+            for fname in os.listdir(temp_dir):
+                if fname.endswith('.mp4') and fname.startswith('tmp'):
+                    fpath = os.path.join(temp_dir, fname)
+                    try:
+                        if os.path.isfile(fpath) and now - os.path.getmtime(fpath) > 300:
+                            os.remove(fpath)
+                    except Exception:
+                        pass
+            # Write new video to a temp file
+            temp_video = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
+            output_path = temp_video.name
+            temp_video.close()
+            print(f"[DIAG] Writing video file to {output_path}. final_clip type: {type(final_clip)}")
+            try:
+                final_clip.write_videofile(output_path, codec='libx264', audio_codec='aac', threads=4, fps=style.fps)
+            except Exception as e:
+                print(f"[DIAG] Error writing video file: {e}")
+                logger.error(f"Error writing video file: {e}")
+                return None
+            print(f"[DIAG] Video file written: {output_path}")
+            return output_path
         except Exception as e:
             print(f"[DIAG] Error in process_video: {e}")
             logger.error(f"Error in process_video: {e}")
             return None
 
-    def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None):
+    def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None, logger=None):
         print("[DIAG] video_processor.compile_video called with additional_settings:", additional_settings, flush=True)
-        result = self.process_video(scenes, audio_files, style_name, additional_settings, output_name)
+        result = self.process_video(scenes, audio_files, style_name, additional_settings, output_name, logger=logger)
         print("[DIAG] video_processor.compile_video done", flush=True)
         return result
 
@@ -615,7 +643,8 @@ class VideoProcessor:
         audio_files: Optional[Union[str, List[str]]] = None,
         style_name: Optional[str] = "modern",
         additional_settings: Optional[Dict[str, Any]] = None,
-        output_name: Optional[str] = None
+        output_name: Optional[str] = None,
+        logger: Optional[logging.Logger] = None
     ) -> Optional[str]:
         print("[DIAG] video_processor.process_video called")
         try:
@@ -699,6 +728,7 @@ class VideoProcessor:
                     )
                     # Add audio if available
                     if clip and scene_audio:
+                        from moviepy.editor import AudioFileClip
                         clip = clip.set_audio(AudioFileClip(scene_audio))
                     print(f"[DIAG] scene {i} clip: {clip}, type: {type(clip)}")
                     if clip:
@@ -728,38 +758,63 @@ class VideoProcessor:
                 print("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
                 logger.error("[DIAG] FATAL: final_clip is still a list. Aborting video generation.")
                 return None
-            # Generate output path
-            import time
-            timestamp = int(time.time())
-            output_path = output_name or f"{style_name}_{timestamp}.mp4"
-            print(f"[DIAG] About to write video file. final_clip type: {type(final_clip)}")
-            # --- At the end, call the actual export logic and pass logger ---
-            from Media_Handler.video_logic import VideoLogic
-            video_logic_handler = VideoLogic(self.config)
-            return video_logic_handler.process_video(
-                scenes,
-                audio_files,
-                style=style_name,
-                music_config=None,
-                logger=None,
-                subtitle_position='center',
-                overlay_title=overlay_title if 'overlay_title' in locals() else '',
-                overlay_author=overlay_author if 'overlay_author' in locals() else '',
-                overlay_logo_bytes=None,  # Remove DIAG print for logo
-                overlay_slogan=overlay_slogan if 'overlay_slogan' in locals() else None,
-                overlay_color=overlay_color if 'overlay_color' in locals() else None,
-                overlay_watermark_bytes=overlay_watermark_bytes if 'overlay_watermark_bytes' in locals() else None,
-                overlay_animate=overlay_animate if 'overlay_animate' in locals() else False,
-                additional_settings=additional_settings
-            )
+            # --- Background Music Mixing ---
+            background_music_path = None
+            if additional_settings and 'background_music_path' in additional_settings:
+                background_music_path = additional_settings['background_music_path']
+                print(f"[DIAG] video_processor got background_music_path: {background_music_path}")
+            else:
+                print(f"[DIAG] video_processor got NO background_music_path")
+            final_audio = None
+            if background_music_path and os.path.exists(background_music_path):
+                try:
+                    print(f"[DIAG] Adding background music: {background_music_path}")
+                    from moviepy.editor import AudioFileClip, CompositeAudioClip
+                    music_clip = AudioFileClip(background_music_path).volumex(0.15)  # Lower volume for background
+                    if final_clip.audio:
+                        print(f"[DIAG] Video has narration audio. Mixing with background music.")
+                        final_audio = CompositeAudioClip([final_clip.audio, music_clip.set_duration(final_clip.duration)])
+                    else:
+                        print(f"[DIAG] Video has NO narration audio. Using only background music.")
+                        final_audio = music_clip.set_duration(final_clip.duration)
+                    final_clip = final_clip.set_audio(final_audio)
+                except Exception as e:
+                    print(f"[DIAG] Failed to add background music: {e}")
+            else:
+                print(f"[DIAG] No valid background music file found or path does not exist: {background_music_path}")
+            # --- End Background Music Mixing ---
+            # Clean up old temp video files (>5 min)
+            temp_dir = tempfile.gettempdir()
+            now = time.time()
+            for fname in os.listdir(temp_dir):
+                if fname.endswith('.mp4') and fname.startswith('tmp'):
+                    fpath = os.path.join(temp_dir, fname)
+                    try:
+                        if os.path.isfile(fpath) and now - os.path.getmtime(fpath) > 300:
+                            os.remove(fpath)
+                    except Exception:
+                        pass
+            # Write new video to a temp file
+            temp_video = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
+            output_path = temp_video.name
+            temp_video.close()
+            print(f"[DIAG] Writing video file to {output_path}. final_clip type: {type(final_clip)}")
+            try:
+                final_clip.write_videofile(output_path, codec='libx264', audio_codec='aac', threads=4, fps=style.fps)
+            except Exception as e:
+                print(f"[DIAG] Error writing video file: {e}")
+                logger.error(f"Error writing video file: {e}")
+                return None
+            print(f"[DIAG] Video file written: {output_path}")
+            return output_path
         except Exception as e:
             print(f"[DIAG] Error in process_video: {e}")
             logger.error(f"Error in process_video: {e}")
             return None
 
-    def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None):
+    def compile_video(self, scenes, audio_files=None, style_name="modern", additional_settings=None, output_name=None, logger=None):
         print("[DIAG] video_processor.compile_video called with additional_settings:", additional_settings, flush=True)
-        result = self.process_video(scenes, audio_files, style_name, additional_settings, output_name)
+        result = self.process_video(scenes, audio_files, style_name, additional_settings, output_name, logger=logger)
         print("[DIAG] video_processor.compile_video done", flush=True)
         return result
 

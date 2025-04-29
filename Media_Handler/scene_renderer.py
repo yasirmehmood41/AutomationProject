@@ -214,24 +214,32 @@ class SceneRenderer:
         return None
 
     def render_scene_with_overlay(self, scene, duration, title, author, logo_bytes=None, slogan=None, overlay_color=None, watermark_bytes=None, animate=False, style=None, subtitle_position='center'):
-        # DEPRECATED: No overlay bar. Use direct overlays only if present.
+        # Defensive: merge overlay fields into scene dict for render_scene
+        if isinstance(scene, dict):
+            scene = dict(scene)  # shallow copy so original is not mutated
+            scene['overlay_title'] = title
+            scene['overlay_author'] = author
+            scene['overlay_logo_bytes'] = logo_bytes
+            scene['overlay_slogan'] = slogan
+            scene['overlay_color'] = overlay_color
+            scene['overlay_watermark_bytes'] = watermark_bytes
         return self.render_scene(scene, style, subtitle_position)
 
     def render_scene(
-        self,
-        scene: Dict,
-        style: Optional[Dict] = None,
-        subtitle_position: str = 'center',  # NEW: user-selectable subtitle position
-        debug: bool = False
+            self,
+            scene: Dict,
+            style: Optional[Dict] = None,
+            subtitle_position: str = 'center',  # NEW: user-selectable subtitle position
+            debug: bool = False
     ) -> Optional[CompositeVideoClip]:
         """Render a scene with NLP-aware text elements.
-        
+
         Args:
             scene: Scene data dictionary with NLP metadata
             style: Style configuration dictionary
             subtitle_position: 'center' or 'bottom'
             debug: Debug mode flag
-        
+
         Returns:
             CompositeVideoClip object or None if rendering fails
         """
@@ -240,52 +248,65 @@ class SceneRenderer:
             import io
             from PIL import Image as PILImage
             import numpy as np
+
+            def safe_get(obj, key, default=None, label=None):
+                print(f"[DEBUG] safe_get: {label or key}: type={type(obj)}, value={repr(obj)[:200]}")
+                if isinstance(obj, dict):
+                    return obj.get(key, default)
+                else:
+                    print(f"[ERROR] safe_get: {label or key}: obj is not a dict!")
+                    return default
+
             if style is None:
                 style = {}
-            # Ensure resolution is always present
-            resolution = style.get('resolution', getattr(self, 'resolution', (1920, 1080)))
+
+            # Defensive: ensure style is a dict or convert from VideoStyle instance
+            if hasattr(style, '__dict__'):
+                style_dict = dict(style.__dict__)
+            elif isinstance(style, dict):
+                style_dict = style
+            else:
+                style_dict = {}
+            resolution = safe_get(style_dict, 'resolution', getattr(self, 'resolution', (1920, 1080)), label='style_dict')
+
             # Get scene properties
-            duration = scene.get('duration', 5.0)
+            duration = safe_get(scene, 'duration', 5.0, label='scene')
+            bg = safe_get(scene, 'background', {}, label='scene')
+            overlay_logo_bytes = safe_get(scene, 'overlay_logo_bytes', None, label='scene')
+            overlay_title = safe_get(scene, 'overlay_title', '', label='scene')
+            overlay_author = safe_get(scene, 'overlay_author', '', label='scene')
+            overlay_slogan = safe_get(scene, 'overlay_slogan', None, label='scene')
+            overlay_watermark_bytes = safe_get(scene, 'overlay_watermark_bytes', None, label='scene')
+            text = safe_get(scene, 'text', None, label='scene')
+            if text is None:
+                text = safe_get(scene, 'script', '', label='scene')
+
             # --- Background rendering ---
-            bg = scene.get('background', {})
-            bg_type = bg.get('type')
-            bg_value = bg.get('value')
+            bg_type = safe_get(bg, 'type')
+            bg_value = safe_get(bg, 'value')
+
             background_clip = None
             debug_bg = (255, 255, 0)  # bright yellow
-            
-            # Use safe summaries for debug prints to avoid binary data in output
+
             def _summarize_scene(scene):
                 summary = {}
-                for k, v in scene.items():
-                    if isinstance(v, (bytes, bytearray)):
-                        summary[k] = f"<bytes, length={len(v)}>"
-                    else:
-                        summary[k] = v
+                if isinstance(scene, dict):
+                    for k, v in scene.items():
+                        if isinstance(v, (bytes, bytearray)):
+                            summary[k] = f"<bytes, length={len(v)}>"
+                        else:
+                            summary[k] = v
+                else:
+                    summary['scene_type'] = str(type(scene))
                 return summary
-            
-            overlay_logo_bytes = scene.get('overlay_logo_bytes')
-            if isinstance(overlay_logo_bytes, (bytes, bytearray)):
-                print(f"[DIAG] overlay_logo_bytes received: type={type(overlay_logo_bytes)}, length={len(overlay_logo_bytes)}")
-            else:
-                print(f"[DIAG] overlay_logo_bytes received: type={type(overlay_logo_bytes)}, value={overlay_logo_bytes}")
-            
-            print("[DIAG] overlay_title:", scene.get('overlay_title'))
-            print("[DIAG] overlay_author:", scene.get('overlay_author'))
-            print("[DIAG] overlay_slogan:", scene.get('overlay_slogan'))
-            
-            overlay_watermark_bytes = scene.get('overlay_watermark_bytes')
-            if isinstance(overlay_watermark_bytes, (bytes, bytearray)):
-                print(f"[DIAG] overlay_watermark_bytes received: type={type(overlay_watermark_bytes)}, length={len(overlay_watermark_bytes)}")
-            else:
-                print(f"[DIAG] overlay_watermark_bytes received: type={type(overlay_watermark_bytes)}, value={overlay_watermark_bytes}")
-            
-            print("[DIAG] background type/value:", bg_type, bg_value)
+
             if debug:
                 background_clip = ColorClip(size=resolution, color=debug_bg, duration=duration)
             elif bg_type == 'color' and bg_value:
                 def hex_to_rgb(hex_color):
                     hex_color = hex_color.lstrip('#')
-                    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+
                 default_bg = (30, 30, 30)  # dark gray
                 bg_val = bg_value
                 if isinstance(bg_val, str) and bg_val.startswith('#'):
@@ -299,7 +320,7 @@ class SceneRenderer:
             elif bg_type == 'image' and bg_value:
                 background_clip = ImageClip(bg_value).set_duration(duration).resize(resolution)
             elif bg_type == 'api' and bg_value:
-                if bg_value.startswith('http'):
+                if isinstance(bg_value, str) and bg_value.startswith('http'):
                     background_clip = ImageClip(bg_value).set_duration(duration).resize(resolution)
             elif bg_type == 'upload' and bg_value:
                 print("[DIAG] Loading uploaded background image:", _summarize_scene({'bg_value': bg_value})['bg_value'])
@@ -307,9 +328,11 @@ class SceneRenderer:
             if not background_clip:
                 default_bg = (30, 30, 30)  # dark gray
                 background_clip = ColorClip(size=resolution, color=default_bg, duration=duration)
+
             # --- PROFESSIONAL OVERLAY LOGIC ---
             clips = [background_clip]
             duration = float(duration)
+
             # 1. Logo (top-right, semi-transparent)
             if overlay_logo_bytes:
                 try:
@@ -326,8 +349,10 @@ class SceneRenderer:
                     logger.error(f"[ERROR] Failed to process overlay_logo_bytes: {e}")
                     print(f"[ERROR] Failed to process overlay_logo_bytes: {e}")
                     print(f"[DEBUG] Exception type: {type(e)}")
+
             # 2. Title (centered, only first 5s, fade out)
-            overlay_title = scene.get('overlay_title')
+            if isinstance(overlay_title, dict):
+                overlay_title = overlay_title.get('text', '')
             if overlay_title:
                 title_clip = TextClip(
                     overlay_title,
@@ -339,39 +364,44 @@ class SceneRenderer:
                     align='center',
                     stroke_color='black',
                     stroke_width=3
-                ).set_duration(min(5, duration)).set_position(('center', self.resolution[1]//4))
+                ).set_duration(min(5, duration)).set_position(('center', self.resolution[1] // 4))
                 title_clip = title_clip.crossfadeout(1.0)
                 clips.append(title_clip)
+
             # 3. Author (bottom-left, small, semi-transparent)
-            overlay_author = scene.get('overlay_author')
+            if isinstance(overlay_author, dict):
+                overlay_author = overlay_author.get('text', '')
             if overlay_author:
                 author_clip = TextClip(
                     overlay_author,
                     fontsize=int(self.default_font_size * 0.9),
                     color='white',
                     font=self.font_name,
-                    size=(self.resolution[0]//2, None),
+                    size=(self.resolution[0] // 2, None),
                     method='caption',
                     align='west',
                     stroke_color='black',
                     stroke_width=2
                 ).set_duration(duration).set_position((30, self.resolution[1] - 90)).set_opacity(0.7)
                 clips.append(author_clip)
+
             # 4. Slogan (bottom-left, below author, small, semi-transparent)
-            overlay_slogan = scene.get('overlay_slogan')
+            if isinstance(overlay_slogan, dict):
+                overlay_slogan = overlay_slogan.get('text', '')
             if overlay_slogan:
                 slogan_clip = TextClip(
                     overlay_slogan,
                     fontsize=int(self.default_font_size * 0.9),
                     color='white',
                     font=self.font_name,
-                    size=(self.resolution[0]//2, None),
+                    size=(self.resolution[0] // 2, None),
                     method='caption',
                     align='west',
                     stroke_color='black',
                     stroke_width=2
                 ).set_duration(duration).set_position((30, self.resolution[1] - 50)).set_opacity(0.7)
                 clips.append(slogan_clip)
+
             # 5. Watermark (bottom-right, semi-transparent)
             if overlay_watermark_bytes:
                 try:
@@ -382,22 +412,28 @@ class SceneRenderer:
                     arr = np.array(watermark_img)
                     arr[..., 3] = (arr[..., 3].astype(np.float32) * 0.5).astype(np.uint8)  # 50% opacity
                     watermark_clip = ImageClip(arr, ismask=False).set_duration(duration)
-                    watermark_clip = watermark_clip.set_position((self.resolution[0] - wm_w - 30, self.resolution[1] - wm_h - 30))
+                    watermark_clip = watermark_clip.set_position(
+                        (self.resolution[0] - wm_w - 30, self.resolution[1] - wm_h - 30))
                     clips.append(watermark_clip)
                 except Exception as e:
                     logger.error(f"[ERROR] Failed to process overlay_watermark_bytes: {e}")
                     print(f"[ERROR] Failed to process overlay_watermark_bytes: {e}")
-            # --- Subtitle (always visible, bottom, safe margin) ---
-            y_pos = self.resolution[1] - int(self.default_font_size * 1.5) - 60
-            text = scene.get('text')
-            if text is None:
-                text = scene.get('script', '')
-            default_text_color = 'white'
+
+            # --- Subtitle (honor user-selected position: 'center' or 'bottom') ---
+            print(f"[DIAG] subtitle_position for this scene: {subtitle_position}")
+            margin = 80  # or your default margin value
+            if subtitle_position == 'center':
+                y_pos = self.resolution[1] // 2
+            else:
+                y_pos = self.resolution[1] - margin
+            print(f"[DIAG] y_pos for subtitle: {y_pos}, resolution: {self.resolution}")
+
             if text and text.strip():
+                print(f"[DIAG] Subtitle text: {text}")
                 text_clip = TextClip(
                     text,
                     fontsize=self.default_font_size,
-                    color=default_text_color,
+                    color='white',
                     font=self.font_name,
                     size=(self.resolution[0] - 80, None),
                     method='caption',
@@ -406,9 +442,14 @@ class SceneRenderer:
                     stroke_width=2
                 ).set_duration(duration).set_position(('center', y_pos))
                 clips.append(text_clip)
+
             return CompositeVideoClip(clips, size=self.resolution)
+
         except Exception as e:
-            logger.error(f"Error rendering scene: {e}")
+            import traceback
+            logger.error(f"Error rendering scene: {e}\n{traceback.format_exc()}")
+            print(f"Error rendering scene: {e}")
+            traceback.print_exc()
             return None
 
 # TODO: Add unit tests for text element rendering and entity/topic highlighting.
